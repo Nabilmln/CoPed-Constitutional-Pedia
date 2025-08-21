@@ -1,6 +1,13 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # ================================
+# NODE MODULES (All directories)
+# ================================
+node_modules/
+*/node_modules/
+**/node_modules/
+
+# ================================
 # FRONTEND (Next.js/React)
 # ================================
 
@@ -47,6 +54,8 @@ next-env.d.ts
 # ================================
 # BACKEND (Python)
 # ================================
+
+backend/node_modules/
 
 # Python
 __pycache__/
@@ -103,17 +112,6 @@ vector_db/
 chromadb/
 faiss_index/
 *.index
-
-# Model files
-models/
-*.model
-*.pkl
-*.pickle
-*.joblib
-*.h5
-*.onnx
-*.pt
-*.pth
 
 # Dataset files (if large)
 data/*.pdf
