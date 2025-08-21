@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 
-export default function Header() {
+// Client Component untuk Header - tidak async karena menggunakan 'use client'
+function Header() {
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
@@ -55,3 +56,5 @@ export default function Header() {
     </header>
   );
 }
+
+export default Header;

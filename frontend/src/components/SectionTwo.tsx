@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Image from "next/image";
 
-export default function SectionTwo() {
+// Client Component untuk SectionTwo - tidak async karena menggunakan 'use client'
+function SectionTwo() {
   const handleAyoCoba = () => {
     console.log("Ayo Coba clicked");
     // TODO: Navigate to AI model page
@@ -105,3 +106,5 @@ export default function SectionTwo() {
     </section>
   );
 }
+
+export default SectionTwo;
