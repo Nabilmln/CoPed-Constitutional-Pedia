@@ -151,9 +151,16 @@
 
 /* Home Page Styles */
 .home-page {
-  background: #1a1a1a;
+  background: transparent; /* Ubah dari #1a1a1a ke transparan untuk Threads background */
   color: #fff;
   animation: fadeIn 0.8s ease-out;
+  position: relative;
+  height: 100vh;
+}
+
+/* Override body background untuk halaman home */
+body:has(.home-page) {
+  background: #0a0a0a; /* Background fallback yang lebih gelap */
 }
 
 /* Hero Section Height */
@@ -401,12 +408,13 @@ main {
 
 /* Section Two Styles */
 .section-two {
-  background: #1a1a1a;
+  background: transparent; /* Ubah dari #1a1a1a ke transparan untuk Threads background */
   min-height: 100vh;
   padding: 80px 32px;
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
 }
 
 .section-two-container {
