@@ -1,7 +1,26 @@
+"use client";
+
 import Image from "next/image";
-import Link from "next/link";
 
 export default function Header() {
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  };
+
+  const handleHomeClick = () => {
+    scrollToSection("section-1");
+  };
+
+  const handleKonsepClick = () => {
+    scrollToSection("section-2");
+  };
+
   return (
     <header className="flex items-center justify-between px-8 py-6 w-full">
       {/* Logo */}
@@ -17,18 +36,18 @@ export default function Header() {
 
       {/* Navigation */}
       <nav className="flex items-center space-x-12">
-        <Link
-          href="/"
-          className="michroma-regular text-white text-4 hover:text-gray-300 transition-colors"
+        <button
+          onClick={handleHomeClick}
+          className="michroma-regular text-white text-4 hover:text-gray-300 transition-colors cursor-pointer bg-transparent border-none"
         >
           Home
-        </Link>
-        <Link
-          href="/konsep"
-          className="michroma-regular text-white text-4 hover:text-gray-300 transition-colors"
+        </button>
+        <button
+          onClick={handleKonsepClick}
+          className="michroma-regular text-white text-4 hover:text-gray-300 transition-colors cursor-pointer bg-transparent border-none"
         >
           Konsep
-        </Link>
+        </button>
       </nav>
 
       {/* Login Button */}

@@ -119,6 +119,9 @@
   body {
     @apply bg-background text-foreground;
   }
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 /* Custom font classes */
@@ -149,9 +152,17 @@
 /* Home Page Styles */
 .home-page {
   background: #1a1a1a;
-  height: 100vh;
   color: #fff;
   animation: fadeIn 0.8s ease-out;
+}
+
+/* Hero Section Height */
+main {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 32px 128px;
 }
 
 @keyframes fadeIn {
@@ -388,6 +399,254 @@
   }
 }
 
+/* Section Two Styles */
+.section-two {
+  background: #1a1a1a;
+  min-height: 100vh;
+  padding: 80px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.section-two-container {
+  max-width: 1200px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+}
+
+.section-two-title {
+  color: #fff;
+  text-align: center;
+  font-family: var(--font-michroma), "Michroma", sans-serif;
+  font-size: 55px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  margin: 0;
+  animation: slideInUp 1s ease-out;
+}
+
+.section-two-description {
+  color: #fff;
+  text-align: center;
+  font-family: var(--font-poppins), "Poppins", sans-serif;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  margin: 0;
+  max-width: 600px;
+  animation: slideInUp 1s ease-out 0.2s both;
+}
+
+.section-two-buttons {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  animation: slideInUp 1s ease-out 0.4s both;
+}
+
+.ayo-coba-button {
+  width: 120px;
+  height: 35px;
+  flex-shrink: 0;
+  border-radius: 60px;
+  border: 1px solid #e0e0e0;
+  background: #f60;
+  color: #fff;
+  font-family: var(--font-poppins), "Poppins", sans-serif;
+  font-size: 14px;
+  font-weight: 300;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.ayo-coba-button:hover {
+  background: #e55500;
+}
+
+.try-now-secondary-button {
+  width: 120px;
+  height: 35px;
+  flex-shrink: 0;
+  border-radius: 60px;
+  border: 1px solid #e0e0e0;
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+  font-family: var(--font-poppins), "Poppins", sans-serif;
+  font-size: 14px;
+  font-weight: 300;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.try-now-secondary-button:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.cards-container {
+  display: flex;
+  gap: 20px;
+  align-items: flex-end;
+  justify-content: center;
+  flex-wrap: wrap;
+  /* max-width: 1100px; */
+  animation: slideInUp 1s ease-out 0.6s both;
+}
+
+.card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+.card-1 {
+  width: 202px;
+  height: 349px;
+  flex-shrink: 0;
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
+}
+
+.card-image {
+  border-radius: 20px;
+}
+
+.card-2 {
+  width: 225px;
+  height: 307px;
+  flex-shrink: 0;
+  border-radius: 20px;
+  background: #f60;
+  /* border: 1px solid rgba(255, 255, 255, 0.1); */
+  padding: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-2-text {
+  color: #1a1a1a;
+  font-family: var(--font-poppins), "Poppins", sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  text-align: center;
+  margin: 0;
+}
+
+.card-3 {
+  width: 225px;
+  height: 211px;
+  flex-shrink: 0;
+  border-radius: 20px;
+  background: #d9d9d9;
+  padding: 20px;
+}
+
+.card-3-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 15px;
+}
+
+.card-3-text {
+  color: #1a1a1a;
+  font-family: var(--font-poppins), "Poppins", sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  text-align: center;
+  margin: 0;
+}
+
+.card-4 {
+  width: 225px;
+  height: 307px;
+  flex-shrink: 0;
+  border-radius: 20px;
+  background: #525252;
+  padding: 30px;
+}
+
+.card-4-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 20px;
+}
+
+.percentage {
+  color: #fff;
+  font-family: var(--font-poppins), "Poppins", sans-serif;
+  font-size: 60px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  margin: 0;
+}
+
+.card-4-text {
+  color: #fff;
+  font-family: var(--font-poppins), "Poppins", sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  text-align: center;
+  margin: 0;
+}
+
+.card-5 {
+  width: 202px;
+  height: 349px;
+  border-radius: 20px;
+  background: #f60;
+  padding: 30px;
+}
+
+.card-5-content {
+  display: flex;
+  flex-direction: column;
+  align-items: left;
+  justify-content: end;
+  height: 100%;
+  gap: 20px;
+}
+
+.card-5-text {
+  color: #1a1a1a;
+  font-family: var(--font-poppins), "Poppins", sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  text-align: left;
+  margin: 0;
+}
+
+.card-icon {
+  filter: brightness(0.2);
+}
+
 @media (max-width: 1024px) {
   .hero-title {
     font-size: 48px;
@@ -401,6 +660,35 @@
   .spline-container {
     width: 350px;
     height: 365px;
+  }
+
+  .section-two-title {
+    font-size: 42px;
+  }
+
+  .cards-container {
+    gap: 15px;
+  }
+
+  .card-1,
+  .card-5 {
+    width: 180px;
+    height: 310px;
+  }
+
+  .card-2,
+  .card-3,
+  .card-4 {
+    width: 200px;
+  }
+
+  .card-2,
+  .card-4 {
+    height: 270px;
+  }
+
+  .card-3 {
+    height: 190px;
   }
 }
 
@@ -441,5 +729,62 @@
 
   .login-button {
     order: 3;
+  }
+
+  /* Section Two Mobile */
+  .section-two {
+    padding: 60px 16px;
+  }
+
+  .section-two-title {
+    font-size: 28px;
+    line-height: 1.2;
+  }
+
+  .section-two-description {
+    font-size: 16px;
+    line-height: 1.4;
+  }
+
+  .section-two-buttons {
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .ayo-coba-button,
+  .try-now-secondary-button {
+    width: 200px;
+  }
+
+  .cards-container {
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .card {
+    width: 100% !important;
+    max-width: 300px;
+    height: auto !important;
+    min-height: 200px;
+  }
+
+  .card-1,
+  .card-5 {
+    height: 250px !important;
+  }
+
+  .card-2,
+  .card-4 {
+    height: 200px !important;
+  }
+
+  .card-3 {
+    height: 150px !important;
+  }
+
+  .percentage {
+    font-size: 48px;
   }
 }

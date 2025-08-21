@@ -47,7 +47,10 @@ export default function HeroSection() {
   };
 
   return (
-    <main className="flex items-center justify-between px-32 py-20 max-h-screen">
+    <main
+      id="section-1"
+      className="flex items-center justify-between px-32 py-20 max-h-screen"
+    >
       {/* Left Content */}
       <div className="flex-1 max-w-3xl">
         {/* Main Title */}
