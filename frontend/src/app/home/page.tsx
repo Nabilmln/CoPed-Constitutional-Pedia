@@ -3,7 +3,6 @@ import HeroSection from "../../components/HeroSection";
 import SectionTwo from "../../components/SectionTwo";
 import Threads from "../../components/ui/threads";
 
-// Server Component - dapat async jika perlu fetch data
 export default function HomePage() {
   return (
     <div className="home-page relative min-h-screen">

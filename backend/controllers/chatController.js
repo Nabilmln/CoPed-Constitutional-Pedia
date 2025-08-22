@@ -1,46 +1,17 @@
-const User = require("../models/Auth");
 const { v4: uuidv4 } = require("uuid");
+const geminiService = require("../services/geminiServices");
+
+// In-memory storage for chat rooms (untuk testing, production bisa gunakan database)
+let chatRooms = [];
 
 // @desc    Create new chat room
 // @route   POST /api/chat/rooms
-// @access  Private
+// @access  Public
 exports.createChatRoom = async (req, res) => {
   try {
     const { title } = req.body;
-    const userId = req.user.id;
 
-    console.log("Creating chat room for user:", userId);
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-
-    // Initialize chatRooms array if not exists
-    if (!user.chatRooms) {
-      user.chatRooms = [];
-    }
-
-    // Initialize ragPreferences if not exists
-    if (!user.ragPreferences) {
-      user.ragPreferences = {
-        defaultSystem: "native",
-        saveHistory: true,
-        maxRoomsLimit: 10,
-      };
-    }
-
-    // Check room limit
-    const activeRooms = user.chatRooms.filter((room) => room.isActive);
-    if (activeRooms.length >= user.ragPreferences.maxRoomsLimit) {
-      return res.status(400).json({
-        success: false,
-        message: `Maximum ${user.ragPreferences.maxRoomsLimit} active rooms allowed`,
-      });
-    }
+    console.log("Creating new chat room with title:", title);
 
     // Create new room
     const newRoom = {
@@ -51,8 +22,7 @@ exports.createChatRoom = async (req, res) => {
       lastActivity: new Date(),
     };
 
-    user.chatRooms.push(newRoom);
-    await user.save();
+    chatRooms.push(newRoom);
 
     console.log("Chat room created successfully:", newRoom.roomId);
 
@@ -73,31 +43,18 @@ exports.createChatRoom = async (req, res) => {
   }
 };
 
-// @desc    Get user's chat rooms
+// @desc    Get all chat rooms
 // @route   GET /api/chat/rooms
-// @access  Private
+// @access  Public
 exports.getChatRooms = async (req, res) => {
   try {
-    const userId = req.user.id;
     const { limit = 10, active = true } = req.query;
 
-    console.log("Getting chat rooms for user:", userId);
-
-    const user = await User.findById(userId).select("chatRooms");
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-
-    // Initialize chatRooms if not exists
-    let rooms = user.chatRooms || [];
+    console.log("Getting chat rooms");
 
     // Filter active rooms if requested
-    if (active === "true") {
-      rooms = rooms.filter((room) => room.isActive);
-    }
+    let rooms =
+      active === "true" ? chatRooms.filter((room) => room.isActive) : chatRooms;
 
     // Sort by last activity
     rooms.sort((a, b) => new Date(b.lastActivity) - new Date(a.lastActivity));
@@ -107,7 +64,7 @@ exports.getChatRooms = async (req, res) => {
 
     // Add message count to each room
     const roomsWithStats = rooms.map((room) => ({
-      ...room.toObject(),
+      ...room,
       messageCount: room.messages ? room.messages.length : 0,
       lastMessage:
         room.messages && room.messages.length > 0
@@ -119,7 +76,7 @@ exports.getChatRooms = async (req, res) => {
       success: true,
       data: {
         rooms: roomsWithStats,
-        total: user.chatRooms ? user.chatRooms.length : 0,
+        total: chatRooms.length,
       },
     });
   } catch (error) {
@@ -134,31 +91,15 @@ exports.getChatRooms = async (req, res) => {
 
 // @desc    Get chat room messages
 // @route   GET /api/chat/rooms/:roomId/messages
-// @access  Private
+// @access  Public
 exports.getChatRoomMessages = async (req, res) => {
   try {
-    const userId = req.user.id;
     const { roomId } = req.params;
     const { limit = 50, page = 1 } = req.query;
 
     console.log("Getting messages for room:", roomId);
 
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-
-    if (!user.chatRooms) {
-      return res.status(404).json({
-        success: false,
-        message: "No chat rooms found",
-      });
-    }
-
-    const room = user.chatRooms.find((room) => room.roomId === roomId);
+    const room = chatRooms.find((room) => room.roomId === roomId);
     if (!room) {
       return res.status(404).json({
         success: false,
@@ -203,15 +144,14 @@ exports.getChatRoomMessages = async (req, res) => {
   }
 };
 
-// @desc    Process chat question with simulated RAG
+// @desc    Process chat question with real RAG
 // @route   POST /api/chat/ask
-// @access  Private
+// @access  Public
 exports.processChatQuestion = async (req, res) => {
   try {
-    const userId = req.user.id;
     const { question, roomId, ragSystem = "auto" } = req.body;
 
-    console.log("Processing question:", question, "for user:", userId);
+    console.log("Processing question:", question, "using system:", ragSystem);
 
     if (!question || !question.trim()) {
       return res.status(400).json({
@@ -221,51 +161,35 @@ exports.processChatQuestion = async (req, res) => {
     }
 
     const startTime = Date.now();
-
-    // Simulasi RAG response (untuk testing)
     let result;
-    const legalKeywords = [
-      "pasal",
-      "undang",
-      "konstitusi",
-      "hukum",
-      "peraturan",
-      "UUD",
-      "ayat",
-    ];
-    const isLegalQuestion = legalKeywords.some((keyword) =>
-      question.toLowerCase().includes(keyword.toLowerCase())
-    );
 
-    if (ragSystem === "native" || (ragSystem === "auto" && isLegalQuestion)) {
+    try {
+      // Call appropriate RAG system based on selection
+      switch (ragSystem) {
+        case "native":
+          result = await geminiService.callNativeRAG(question, "anonymous");
+          break;
+        case "langchain":
+          result = await geminiService.callLangChainRAG(question, "anonymous");
+          break;
+        case "auto":
+        default:
+          result = await geminiService.autoSelectRAG(question, "anonymous");
+          break;
+      }
+    } catch (ragError) {
+      console.error("RAG system error:", ragError);
+
+      // Fallback response if RAG fails
       result = {
-        answer: `[Simulasi Native RAG] Jawaban untuk pertanyaan hukum: "${question}". 
-
-Berdasarkan analisis menggunakan sistem Native RAG dengan Gemini 2.5 Flash, berikut adalah jawaban yang relevan:
-
-Pertanyaan Anda berkaitan dengan aspek konstitusional Indonesia. Sistem kami menganalisis dokumen-dokumen hukum yang tersedia dalam database dan memberikan respons dengan akurasi tinggi.
-
-Catatan: Ini adalah simulasi untuk testing. Dalam implementasi final, sistem akan terhubung dengan Gemini API dan database dokumen hukum yang sesungguhnya.`,
-        system: "native",
-        accuracy: 96.8,
-        responseTime: 4200,
-        sources: ["UUD1945.pdf", "Konstitusi_Indonesia.pdf"],
-        geminiModel: "gemini-2.5-flash",
-      };
-    } else {
-      result = {
-        answer: `[Simulasi LangChain RAG] Jawaban untuk pertanyaan umum: "${question}". 
-
-Menggunakan sistem LangChain RAG dengan Gemini 1.5 Flash, berikut adalah respons yang dihasilkan:
-
-Sistem telah memproses pertanyaan Anda dan mencari informasi relevan dari database vektor. Jawaban ini dioptimalkan untuk kecepatan respons.
-
-Catatan: Ini adalah simulasi untuk testing. Dalam implementasi final, sistem akan menggunakan LangChain framework dengan Gemini API.`,
-        system: "langchain",
-        accuracy: 63.6,
-        responseTime: 2800,
-        sources: ["VectorDB_General.txt"],
-        geminiModel: "gemini-1.5-flash",
+        answer: `Maaf, terjadi kesalahan pada sistem RAG. Namun berdasarkan pertanyaan "${question}", saya dapat memberikan informasi umum bahwa ini berkaitan dengan aspek konstitusional Indonesia. Silakan coba lagi atau hubungi administrator.`,
+        system: ragSystem,
+        accuracy: 0,
+        responseTime: Date.now() - startTime,
+        sources: [],
+        geminiModel: "fallback",
+        error: true,
+        errorMessage: ragError.message,
       };
     }
 
@@ -273,28 +197,25 @@ Catatan: Ini adalah simulasi untuk testing. Dalam implementasi final, sistem aka
 
     // If roomId provided, save to chat history
     if (roomId) {
-      const user = await User.findById(userId);
-      if (user && user.chatRooms) {
-        const roomIndex = user.chatRooms.findIndex(
-          (room) => room.roomId === roomId
-        );
-        if (roomIndex !== -1) {
-          const newMessage = {
-            question: question.trim(),
-            answer: result.answer,
-            ragSystem: result.system,
-            accuracy: result.accuracy,
-            responseTime: result.responseTime || responseTime,
-            sources: result.sources || [],
-            geminiModel: result.geminiModel,
-          };
+      const roomIndex = chatRooms.findIndex((room) => room.roomId === roomId);
+      if (roomIndex !== -1) {
+        const newMessage = {
+          question: question.trim(),
+          answer: result.answer,
+          ragSystem: result.system,
+          accuracy: result.accuracy,
+          responseTime: result.responseTime || responseTime,
+          sources: result.sources || [],
+          geminiModel: result.geminiModel,
+          isError: result.error || false,
+          errorMessage: result.errorMessage || null,
+          createdAt: new Date(),
+        };
 
-          user.chatRooms[roomIndex].messages.push(newMessage);
-          user.chatRooms[roomIndex].lastActivity = new Date();
-          await user.save();
+        chatRooms[roomIndex].messages.push(newMessage);
+        chatRooms[roomIndex].lastActivity = new Date();
 
-          console.log("Message saved to room:", roomId);
-        }
+        console.log("Message saved to room:", roomId);
       }
     }
 
@@ -310,6 +231,9 @@ Catatan: Ini adalah simulasi untuk testing. Dalam implementasi final, sistem aka
         geminiModel: result.geminiModel,
         roomId: roomId || null,
         cached: false,
+        isError: result.error || false,
+        errorMessage: result.errorMessage || null,
+        autoSelected: result.autoSelected || false,
       },
     });
   } catch (error) {
@@ -322,34 +246,62 @@ Catatan: Ini adalah simulasi untuk testing. Dalam implementasi final, sistem aka
   }
 };
 
+// @desc    Update chat room title
+// @route   PUT /api/chat/rooms/:roomId
+// @access  Public
+exports.updateChatRoomTitle = async (req, res) => {
+  try {
+    const { roomId } = req.params;
+    const { title } = req.body;
+
+    console.log("Updating chat room title:", roomId, "to:", title);
+
+    if (!title || !title.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Title is required",
+      });
+    }
+
+    const roomIndex = chatRooms.findIndex((room) => room.roomId === roomId);
+    if (roomIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        message: "Chat room not found",
+      });
+    }
+
+    chatRooms[roomIndex].title = title.trim();
+
+    console.log("Chat room title updated successfully:", roomId);
+
+    res.status(200).json({
+      success: true,
+      message: "Chat room title updated successfully",
+      data: {
+        room: chatRooms[roomIndex],
+      },
+    });
+  } catch (error) {
+    console.error("Update chat room title error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error updating chat room title",
+      error: error.message,
+    });
+  }
+};
+
 // @desc    Delete chat room
 // @route   DELETE /api/chat/rooms/:roomId
-// @access  Private
+// @access  Public
 exports.deleteChatRoom = async (req, res) => {
   try {
-    const userId = req.user.id;
     const { roomId } = req.params;
 
-    console.log("Deleting chat room:", roomId, "for user:", userId);
+    console.log("Deleting chat room:", roomId);
 
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-
-    if (!user.chatRooms) {
-      return res.status(404).json({
-        success: false,
-        message: "No chat rooms found",
-      });
-    }
-
-    const roomIndex = user.chatRooms.findIndex(
-      (room) => room.roomId === roomId
-    );
+    const roomIndex = chatRooms.findIndex((room) => room.roomId === roomId);
     if (roomIndex === -1) {
       return res.status(404).json({
         success: false,
@@ -358,8 +310,7 @@ exports.deleteChatRoom = async (req, res) => {
     }
 
     // Mark as inactive instead of deleting
-    user.chatRooms[roomIndex].isActive = false;
-    await user.save();
+    chatRooms[roomIndex].isActive = false;
 
     console.log("Chat room deleted successfully:", roomId);
 

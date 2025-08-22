@@ -2,11 +2,7 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 
-// Import database connection
-const connectDB = require("./config/database");
-
 // Import routes
-const authRouter = require("./routes/authRoutes");
 const chatRoute = require("./routes/chatRoutes");
 
 const app = express();
@@ -48,15 +44,13 @@ app.get("/", (req, res) => {
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || "development",
     endpoints: {
-      auth: "/api/auth",
-      // chat: "/api/chat",
+      chat: "/api/chat",
       health: "/api/health",
     },
   });
 });
 
 // API routes
-app.use("/api/auth", authRouter);
 app.use("/api/chat", chatRoute);
 
 // Health check endpoint
@@ -67,7 +61,7 @@ app.get("/api/health", (req, res) => {
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     memory: process.memoryUsage(),
-    database: "Connected to MongoDB Atlas",
+    status: "No Authentication Required",
   });
 });
 
@@ -83,8 +77,9 @@ app.use("*", (req, res) => {
     availableRoutes: [
       "GET /",
       "GET /api/health",
-      "POST /api/auth/register",
-      "POST /api/auth/login",
+      "POST /api/chat/rooms",
+      "GET /api/chat/rooms",
+      "POST /api/chat/ask",
     ],
   });
 });
@@ -92,33 +87,6 @@ app.use("*", (req, res) => {
 // Global error handler
 app.use((err, req, res, next) => {
   console.error("🔴 Error:", err.stack);
-
-  // Mongoose validation error
-  if (err.name === "ValidationError") {
-    const errors = Object.values(err.errors).map((val) => val.message);
-    return res.status(400).json({
-      success: false,
-      message: "Validation Error",
-      errors,
-    });
-  }
-
-  // Mongoose duplicate key error
-  if (err.code === 11000) {
-    const field = Object.keys(err.keyValue);
-    return res.status(400).json({
-      success: false,
-      message: `Duplicate field value: ${field}. Please use another value.`,
-    });
-  }
-
-  // JWT errors
-  if (err.name === "JsonWebTokenError") {
-    return res.status(401).json({
-      success: false,
-      message: "Invalid token",
-    });
-  }
 
   // Default error
   res.status(err.statusCode || 500).json({
@@ -134,10 +102,7 @@ app.use((err, req, res, next) => {
 
 const startServer = async () => {
   try {
-    // Connect to MongoDB Atlas
-    await connectDB();
-
-    // Start server
+    // Start server (no database needed for in-memory storage)
     const PORT = process.env.PORT || 5000;
 
     app.listen(PORT, () => {
@@ -147,6 +112,8 @@ const startServer = async () => {
       console.log(`📍 Local URL: http://localhost:${PORT}`);
       console.log(`🔧 Environment: ${process.env.NODE_ENV || "development"}`);
       console.log(`📊 API Documentation: http://localhost:${PORT}/api/health`);
+      console.log(`✅ Authentication: DISABLED`);
+      console.log(`💾 Storage: In-Memory (session-based)`);
       console.log("🚀 ================================");
     });
   } catch (error) {

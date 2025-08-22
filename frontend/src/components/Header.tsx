@@ -1,9 +1,12 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 // Client Component untuk Header - tidak async karena menggunakan 'use client'
 function Header() {
+  const router = useRouter();
+
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
@@ -20,6 +23,10 @@ function Header() {
 
   const handleKonsepClick = () => {
     scrollToSection("section-2");
+  };
+
+  const handleChatClick = () => {
+    router.push("/chat");
   };
 
   return (
@@ -51,8 +58,10 @@ function Header() {
         </button>
       </nav>
 
-      {/* Login Button */}
-      <button className="login-button">Masuk</button>
+      {/* Chat Button */}
+      <button onClick={handleChatClick} className="login-button">
+        Chat
+      </button>
     </header>
   );
 }

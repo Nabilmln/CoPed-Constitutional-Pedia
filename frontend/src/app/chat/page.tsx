@@ -9,73 +9,54 @@ import {
   EllipsisHorizontalIcon,
   ArrowLeftIcon,
 } from "@heroicons/react/24/outline";
+import { apiService, ChatMessage, ChatRoom } from "@/services/api";
 
 // Interface untuk tipe data
-interface ChatMessage {
-  id: string;
-  type: "user" | "ai";
-  content: string;
-  timestamp: Date;
-}
-
-interface ChatRoom {
-  id: string;
-  title: string;
-  lastMessage: string;
-  timestamp: Date;
-  messages: ChatMessage[];
-}
-
 interface GroupedChats {
   [key: string]: ChatRoom[];
 }
 
 export default function ChatPage() {
   const router = useRouter();
-  const [chatRooms, setChatRooms] = useState<ChatRoom[]>([
-    {
-      id: "1",
-      title: "Pertanyaan tentang UUD 1945",
-      lastMessage: "Apa itu pasal 28 UUD 1945?",
-      timestamp: new Date(),
-      messages: [
-        {
-          id: "1",
-          type: "user",
-          content: "Apa itu pasal 28 UUD 1945?",
-          timestamp: new Date(),
-        },
-        {
-          id: "2",
-          type: "ai",
-          content:
-            "Pasal 28 UUD 1945 mengatur tentang hak asasi manusia. Pasal ini menjamin berbagai hak fundamental warga negara Indonesia termasuk hak untuk hidup, hak kebebasan beragama, hak atas pendidikan, dan lain-lain.",
-          timestamp: new Date(),
-        },
-      ],
-    },
-    {
-      id: "2",
-      title: "Sistem Pemerintahan Indonesia",
-      lastMessage: "Bagaimana sistem pemerintahan Indonesia?",
-      timestamp: new Date(Date.now() - 86400000), // Yesterday
-      messages: [],
-    },
-  ]);
-
-  const [activeRoom, setActiveRoom] = useState<string | null>("1");
+  const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
+  const [activeRoom, setActiveRoom] = useState<string | null>(null);
   const [currentMessage, setCurrentMessage] = useState("");
-  const [selectedModel, setSelectedModel] = useState<"Native" | "LangChain">(
-    "Native"
+  const [selectedModel, setSelectedModel] = useState<"native" | "langchain">(
+    "native"
   );
   const [hoveredRoom, setHoveredRoom] = useState<string | null>(null);
   const [showDropdown, setShowDropdown] = useState<string | null>(null);
   const [isRenaming, setIsRenaming] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
-
   const [isTyping, setIsTyping] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Load chat rooms from API
+  useEffect(() => {
+    loadChatRooms();
+  }, []);
+
+  // Load chat rooms from API
+  const loadChatRooms = async () => {
+    try {
+      setIsLoading(true);
+      const response = await apiService.getChatRooms();
+      if (response.success) {
+        setChatRooms(response.data.rooms);
+        if (response.data.rooms.length > 0 && !activeRoom) {
+          setActiveRoom(response.data.rooms[0].roomId);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to load chat rooms:", error);
+      setError("Gagal memuat riwayat chat");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -86,7 +67,7 @@ export default function ChatPage() {
   const groupChatsByDate = (chats: ChatRoom[]): GroupedChats => {
     const groups: GroupedChats = {};
     chats.forEach((chat) => {
-      const date = chat.timestamp.toLocaleDateString("id-ID", {
+      const date = new Date(chat.lastActivity).toLocaleDateString("id-ID", {
         day: "numeric",
         month: "long",
       });
@@ -98,84 +79,105 @@ export default function ChatPage() {
     return groups;
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!currentMessage.trim() || !activeRoom) return;
 
-    const newMessage: ChatMessage = {
-      id: Date.now().toString(),
-      type: "user",
-      content: currentMessage,
-      timestamp: new Date(),
-    };
+    try {
+      setIsTyping(true);
+      setCurrentMessage("");
 
-    // Add user message
-    setChatRooms((prev) =>
-      prev.map((room) =>
-        room.id === activeRoom
-          ? { ...room, messages: [...room.messages, newMessage] }
-          : room
-      )
-    );
-
-    setCurrentMessage("");
-    setIsTyping(true);
-
-    // Simulate AI response
-    setTimeout(() => {
-      const aiResponse: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        type: "ai",
-        content: `Terima kasih atas pertanyaan Anda tentang "${currentMessage}". Ini adalah respons dari model ${selectedModel}. Saya akan membantu menjelaskan topik tersebut berdasarkan UUD 1945 dan peraturan perundang-undangan yang berlaku.`,
-        timestamp: new Date(),
-      };
-
-      setChatRooms((prev) =>
-        prev.map((room) =>
-          room.id === activeRoom
-            ? { ...room, messages: [...room.messages, aiResponse] }
-            : room
-        )
+      const response = await apiService.askQuestion(
+        currentMessage.trim(),
+        activeRoom,
+        selectedModel === "native" ? "native" : "langchain"
       );
+
+      if (response.success) {
+        // Reload the current room messages to get the updated conversation
+        const roomResponse = await apiService.getChatRoomMessages(activeRoom);
+        if (roomResponse.success) {
+          setChatRooms((prev) =>
+            prev.map((room) =>
+              room.roomId === activeRoom
+                ? {
+                    ...room,
+                    messages: roomResponse.data.messages,
+                    lastActivity: new Date(),
+                  }
+                : room
+            )
+          );
+        }
+      } else {
+        setError("Gagal mengirim pesan");
+      }
+    } catch (error) {
+      console.error("Failed to send message:", error);
+      setError("Gagal mengirim pesan");
+    } finally {
       setIsTyping(false);
-    }, 2000);
+    }
   };
 
-  const handleNewChat = () => {
-    const newRoom: ChatRoom = {
-      id: Date.now().toString(),
-      title: "Chat Baru",
-      lastMessage: "",
-      timestamp: new Date(),
-      messages: [],
-    };
-
-    setChatRooms((prev) => [newRoom, ...prev]);
-    setActiveRoom(newRoom.id);
+  const handleNewChat = async () => {
+    try {
+      const response = await apiService.createChatRoom("Chat Baru");
+      if (response.success) {
+        const newRoom = response.data.room;
+        setChatRooms((prev) => [newRoom, ...prev]);
+        setActiveRoom(newRoom.roomId);
+      }
+    } catch (error) {
+      console.error("Failed to create new chat:", error);
+      setError("Gagal membuat chat baru");
+    }
   };
 
-  const handleRenameRoom = (roomId: string, newTitle: string) => {
-    setChatRooms((prev) =>
-      prev.map((room) =>
-        room.id === roomId ? { ...room, title: newTitle } : room
-      )
-    );
+  const handleRenameRoom = async (roomId: string, newTitle: string) => {
+    try {
+      const response = await apiService.updateChatRoomTitle(roomId, newTitle);
+      if (response.success) {
+        setChatRooms((prev) =>
+          prev.map((room) =>
+            room.roomId === roomId ? { ...room, title: newTitle } : room
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Failed to rename room:", error);
+      setError("Gagal mengubah nama chat");
+    }
     setIsRenaming(null);
     setShowDropdown(null);
   };
 
-  const handleDeleteRoom = (roomId: string) => {
-    setChatRooms((prev) => prev.filter((room) => room.id !== roomId));
-    if (activeRoom === roomId) {
-      setActiveRoom(chatRooms.length > 1 ? chatRooms[0].id : null);
+  const handleDeleteRoom = async (roomId: string) => {
+    try {
+      await apiService.deleteChatRoom(roomId);
+      setChatRooms((prev) => prev.filter((room) => room.roomId !== roomId));
+      if (activeRoom === roomId) {
+        setActiveRoom(chatRooms.length > 1 ? chatRooms[0].roomId : null);
+      }
+      setShowDropdown(null);
+    } catch (error) {
+      console.error("Failed to delete room:", error);
+      setError("Gagal menghapus chat");
     }
-    setShowDropdown(null);
   };
 
   const getCurrentRoom = () => {
-    return chatRooms.find((room) => room.id === activeRoom);
+    return chatRooms.find((room) => room.roomId === activeRoom);
   };
 
   const groupedChats = groupChatsByDate(chatRooms);
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen bg-black items-center justify-center">
+        <div className="text-white">Memuat...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-black p-2">
@@ -214,27 +216,27 @@ export default function ChatPage() {
               </h4>
               {chats.map((room) => (
                 <div
-                  key={room.id}
+                  key={room.roomId}
                   className={`relative p-1.5 mb-1.5 cursor-pointer transition-all duration-200 ${
-                    activeRoom === room.id
+                    activeRoom === room.roomId
                       ? "bg-[#3C3C3C] rounded-lg"
-                      : hoveredRoom === room.id
+                      : hoveredRoom === room.roomId
                       ? "bg-[rgba(60,60,60,0.56)] rounded-lg"
                       : ""
                   }`}
-                  onMouseEnter={() => setHoveredRoom(room.id)}
+                  onMouseEnter={() => setHoveredRoom(room.roomId)}
                   onMouseLeave={() => setHoveredRoom(null)}
-                  onClick={() => setActiveRoom(room.id)}
+                  onClick={() => setActiveRoom(room.roomId)}
                 >
-                  {isRenaming === room.id ? (
+                  {isRenaming === room.roomId ? (
                     <input
                       type="text"
                       value={renameValue}
                       onChange={(e) => setRenameValue(e.target.value)}
-                      onBlur={() => handleRenameRoom(room.id, renameValue)}
+                      onBlur={() => handleRenameRoom(room.roomId, renameValue)}
                       onKeyPress={(e) => {
                         if (e.key === "Enter") {
-                          handleRenameRoom(room.id, renameValue);
+                          handleRenameRoom(room.roomId, renameValue);
                         }
                       }}
                       className="w-full bg-transparent text-white poppins-regular text-[10px] outline-none"
@@ -246,12 +248,13 @@ export default function ChatPage() {
                     </p>
                   )}
 
-                  {(hoveredRoom === room.id || showDropdown === room.id) && (
+                  {(hoveredRoom === room.roomId ||
+                    showDropdown === room.roomId) && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setShowDropdown(
-                          showDropdown === room.id ? null : room.id
+                          showDropdown === room.roomId ? null : room.roomId
                         );
                       }}
                       className="absolute right-1 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
@@ -260,12 +263,12 @@ export default function ChatPage() {
                     </button>
                   )}
 
-                  {showDropdown === room.id && (
+                  {showDropdown === room.roomId && (
                     <div className="absolute right-0 top-full mt-1 bg-[#3C3C3C] rounded-lg shadow-lg py-1 z-10 min-w-[110px]">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          setIsRenaming(room.id);
+                          setIsRenaming(room.roomId);
                           setRenameValue(room.title);
                           setShowDropdown(null);
                         }}
@@ -276,7 +279,7 @@ export default function ChatPage() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleDeleteRoom(room.id);
+                          handleDeleteRoom(room.roomId);
                         }}
                         className="block w-full text-left px-2 py-1 text-red-400 hover:bg-[#4C4C4C] poppins-regular text-[10px]"
                       >
@@ -305,29 +308,45 @@ export default function ChatPage() {
         <select
           value={selectedModel}
           onChange={(e) =>
-            setSelectedModel(e.target.value as "Native" | "LangChain")
+            setSelectedModel(e.target.value as "native" | "langchain")
           }
           className="bg-[#3C3C3C] text-white px-2 py-1.5 rounded-lg poppins-regular border border-gray-600 focus:border-[#F60] outline-none text-xs"
         >
-          <option value="Native">Native</option>
-          <option value="LangChain">LangChain</option>
+          <option value="native">Native</option>
+          <option value="langchain">LangChain</option>
         </select>
       </div>
 
       {/* Main Chat Area */}
       <main className="flex-1 flex flex-col">
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-500 text-white p-2 mb-2 rounded-lg text-xs">
+            {error}
+            <button
+              onClick={() => setError(null)}
+              className="ml-2 text-red-200 hover:text-white"
+            >
+              ×
+            </button>
+          </div>
+        )}
+
         {/* Messages Area - Reduced padding */}
         <div className="flex-1 bg-transparent rounded-xl p-2 mb-2 overflow-y-auto chat-messages">
           {activeRoom && getCurrentRoom() ? (
             <div className="space-y-2 max-w-5xl mx-auto">
-              {getCurrentRoom()!.messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex message-enter ${
-                    message.type === "user" ? "justify-end" : "justify-start"
-                  }`}
-                >
-                  {message.type === "ai" && (
+              {getCurrentRoom()!.messages.map((message, index) => (
+                <div key={index} className="space-y-2">
+                  {/* User Question */}
+                  <div className="flex justify-end">
+                    <div className="text-white p-2 rounded-lg max-w-2xl poppins-regular text-xs">
+                      {message.question}
+                    </div>
+                  </div>
+
+                  {/* AI Answer */}
+                  <div className="flex justify-start">
                     <div className="flex items-start space-x-2">
                       <Image
                         src="/coped-logo-black-circle.png"
@@ -337,15 +356,34 @@ export default function ChatPage() {
                         className="w-5 h-5 rounded-full mt-1"
                       />
                       <div className="bg-[#2A2A2A] text-white p-2 rounded-lg max-w-2xl poppins-regular text-xs">
-                        {message.content}
+                        {message.answer}
+
+                        {/* Message metadata */}
+                        <div className="mt-2 text-xs text-gray-400 border-t border-gray-600 pt-2">
+                          <div className="flex justify-between items-center">
+                            <span>Model: {message.geminiModel}</span>
+                            <span>
+                              Akurasi: {message.accuracy?.toFixed(1)}%
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center mt-1">
+                            <span>Sistem: {message.ragSystem}</span>
+                            <span>Waktu: {message.responseTime}ms</span>
+                          </div>
+                          {message.sources && message.sources.length > 0 && (
+                            <div className="mt-1">
+                              <span>Sumber: {message.sources.join(", ")}</span>
+                            </div>
+                          )}
+                          {message.isError && (
+                            <div className="mt-1 text-red-400">
+                              Error: {message.errorMessage}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  )}
-                  {message.type === "user" && (
-                    <div className="text-white p-2 rounded-lg max-w-2xl poppins-regular text-xs">
-                      {message.content}
-                    </div>
-                  )}
+                  </div>
                 </div>
               ))}
 

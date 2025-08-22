@@ -5,19 +5,17 @@ const {
   getChatRooms,
   getChatRoomMessages,
   deleteChatRoom,
+  updateChatRoomTitle,
   processChatQuestion,
 } = require("../controllers/chatController");
-const { protect } = require("../middleware/auth");
 
 const router = express.Router();
-
-// All routes are protected
-router.use(protect);
 
 // Chat room management
 router.post("/rooms", createChatRoom);
 router.get("/rooms", getChatRooms);
 router.get("/rooms/:roomId/messages", getChatRoomMessages);
+router.put("/rooms/:roomId", updateChatRoomTitle);
 router.delete("/rooms/:roomId", deleteChatRoom);
 
 // RAG processing
