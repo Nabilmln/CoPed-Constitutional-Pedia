@@ -20,9 +20,9 @@ const michroma = Michroma({
 });
 
 const poppins = Poppins({
-  variable: "--font-poppins",
+  variable: "--font-poppins", 
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["200", "300", "400"],
 });
 
 export const metadata: Metadata = {

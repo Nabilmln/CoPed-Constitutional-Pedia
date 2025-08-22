@@ -1,6 +1,7 @@
 "use client";
 
 import Spline from "@splinetool/react-spline";
+import { useRouter } from "next/navigation";
 
 // Client Component untuk Spline Visualization - Simple approach
 function SplineVisualization() {
@@ -20,9 +21,11 @@ function SplineVisualization() {
 
 // Client Component untuk HeroSection - tidak async karena menggunakan 'use client'
 function HeroSection() {
+  const router = useRouter();
+
   const handleTryNow = () => {
-    // TODO: Navigate to search/chat page
-    console.log("Navigate to search page");
+    // Navigate to chat page
+    router.push("/chat");
   };
 
   return (
@@ -43,8 +46,8 @@ function HeroSection() {
         {/* Search Box */}
         <div className="search-container">
           <div className="search-text">Temukan Jawabanmu</div>
-          <button className="try-now-button" onClick={handleTryNow}>
-            Try now
+          <button className="lets-chat-button" onClick={handleTryNow}>
+            Let's Chat
           </button>
         </div>
       </div>
