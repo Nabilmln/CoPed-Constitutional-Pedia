@@ -82,38 +82,100 @@ export default function ChatPage() {
   const handleSendMessage = async () => {
     if (!currentMessage.trim() || !activeRoom) return;
 
+    const userMessage = currentMessage.trim();
+
     try {
-      setIsTyping(true);
+      // Immediately show user message
       setCurrentMessage("");
+      setIsTyping(true);
+
+      // Add user message to UI immediately
+      const tempMessage: ChatMessage = {
+        question: userMessage,
+        answer: "", // Temporary empty answer
+        ragSystem: selectedModel,
+        accuracy: 0,
+        responseTime: 0,
+        sources: [],
+        geminiModel: "",
+        isError: false,
+        errorMessage: undefined,
+        createdAt: new Date(),
+      };
+
+      setChatRooms((prev) =>
+        prev.map((room) =>
+          room.roomId === activeRoom
+            ? {
+                ...room,
+                messages: [...room.messages, tempMessage],
+                lastActivity: new Date(),
+              }
+            : room
+        )
+      );
 
       const response = await apiService.askQuestion(
-        currentMessage.trim(),
+        userMessage,
         activeRoom,
         selectedModel === "native" ? "native" : "langchain"
       );
 
       if (response.success) {
-        // Reload the current room messages to get the updated conversation
-        const roomResponse = await apiService.getChatRoomMessages(activeRoom);
-        if (roomResponse.success) {
-          setChatRooms((prev) =>
-            prev.map((room) =>
-              room.roomId === activeRoom
-                ? {
-                    ...room,
-                    messages: roomResponse.data.messages,
-                    lastActivity: new Date(),
-                  }
-                : room
-            )
-          );
-        }
+        // Update the last message with the actual response
+        setChatRooms((prev) =>
+          prev.map((room) =>
+            room.roomId === activeRoom
+              ? {
+                  ...room,
+                  messages: room.messages.map((msg, index) =>
+                    index === room.messages.length - 1
+                      ? {
+                          ...msg,
+                          answer: response.data.answer,
+                          ragSystem: response.data.system,
+                          accuracy: response.data.accuracy,
+                          responseTime: response.data.responseTime,
+                          sources: response.data.sources,
+                          geminiModel: response.data.geminiModel,
+                          isError: response.data.isError,
+                          errorMessage: response.data.errorMessage,
+                        }
+                      : msg
+                  ),
+                  lastActivity: new Date(),
+                }
+              : room
+          )
+        );
       } else {
         setError("Gagal mengirim pesan");
+        // Remove the temporary message if API fails
+        setChatRooms((prev) =>
+          prev.map((room) =>
+            room.roomId === activeRoom
+              ? {
+                  ...room,
+                  messages: room.messages.slice(0, -1),
+                }
+              : room
+          )
+        );
       }
     } catch (error) {
       console.error("Failed to send message:", error);
       setError("Gagal mengirim pesan");
+      // Remove the temporary message if error occurs
+      setChatRooms((prev) =>
+        prev.map((room) =>
+          room.roomId === activeRoom
+            ? {
+                ...room,
+                messages: room.messages.slice(0, -1),
+              }
+            : room
+        )
+      );
     } finally {
       setIsTyping(false);
     }
@@ -332,73 +394,79 @@ export default function ChatPage() {
           </div>
         )}
 
-        {/* Messages Area - Reduced padding */}
-        <div className="flex-1 bg-transparent rounded-xl p-2 mb-2 overflow-y-auto chat-messages">
+        {/* Messages Area */}
+        <div className="flex-1 bg-transparent rounded-xl p-4 mb-2 overflow-y-auto chat-messages">
           {activeRoom && getCurrentRoom() ? (
-            <div className="space-y-2 max-w-5xl mx-auto">
+            <div className="space-y-4">
               {getCurrentRoom()!.messages.map((message, index) => (
-                <div key={index} className="space-y-2">
-                  {/* User Question */}
+                <div key={index} className="space-y-4">
+                  {/* User Question - Right side */}
                   <div className="flex justify-end">
-                    <div className="text-white p-2 rounded-lg max-w-2xl poppins-regular text-xs">
+                    <div className="bg-[#F60] text-white p-3 rounded-2xl rounded-tr-md max-w-2xl poppins-regular text-sm">
                       {message.question}
                     </div>
                   </div>
 
-                  {/* AI Answer */}
-                  <div className="flex justify-start">
-                    <div className="flex items-start space-x-2">
-                      <Image
-                        src="/coped-logo-black-circle.png"
-                        alt="AI"
-                        width={20}
-                        height={20}
-                        className="w-5 h-5 rounded-full mt-1"
-                      />
-                      <div className="bg-[#2A2A2A] text-white p-2 rounded-lg max-w-2xl poppins-regular text-xs">
-                        {message.answer}
+                  {/* AI Answer - Left side (only show if answer exists) */}
+                  {message.answer && (
+                    <div className="flex justify-start">
+                      <div className="flex items-start space-x-3">
+                        <Image
+                          src="/coped-logo-black-circle.png"
+                          alt="AI"
+                          width={32}
+                          height={32}
+                          className="w-8 h-8 rounded-full mt-1 flex-shrink-0"
+                        />
+                        <div className="bg-[#2A2A2A] text-white p-3 rounded-2xl rounded-tl-md max-w-2xl poppins-regular text-sm">
+                          <div className="whitespace-pre-wrap">
+                            {message.answer}
+                          </div>
 
-                        {/* Message metadata */}
-                        <div className="mt-2 text-xs text-gray-400 border-t border-gray-600 pt-2">
-                          <div className="flex justify-between items-center">
-                            <span>Model: {message.geminiModel}</span>
-                            <span>
-                              Akurasi: {message.accuracy?.toFixed(1)}%
-                            </span>
-                          </div>
-                          <div className="flex justify-between items-center mt-1">
-                            <span>Sistem: {message.ragSystem}</span>
-                            <span>Waktu: {message.responseTime}ms</span>
-                          </div>
-                          {message.sources && message.sources.length > 0 && (
-                            <div className="mt-1">
-                              <span>Sumber: {message.sources.join(", ")}</span>
+                          {/* Message metadata */}
+                          <div className="mt-3 text-xs text-gray-400 border-t border-gray-600 pt-2">
+                            <div className="flex justify-between items-center">
+                              <span>Model: {message.geminiModel}</span>
+                              <span>
+                                Akurasi: {message.accuracy?.toFixed(1)}%
+                              </span>
                             </div>
-                          )}
-                          {message.isError && (
-                            <div className="mt-1 text-red-400">
-                              Error: {message.errorMessage}
+                            <div className="flex justify-between items-center mt-1">
+                              <span>Sistem: {message.ragSystem}</span>
+                              <span>Waktu: {message.responseTime}ms</span>
                             </div>
-                          )}
+                            {message.sources && message.sources.length > 0 && (
+                              <div className="mt-1">
+                                <span>
+                                  Sumber: {message.sources.join(", ")}
+                                </span>
+                              </div>
+                            )}
+                            {message.isError && (
+                              <div className="mt-1 text-red-400">
+                                Error: {message.errorMessage}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               ))}
 
               {/* Typing indicator */}
               {isTyping && (
                 <div className="flex justify-start">
-                  <div className="flex items-start space-x-2">
+                  <div className="flex items-start space-x-3">
                     <Image
                       src="/coped-logo-black-circle.png"
                       alt="AI"
-                      width={20}
-                      height={20}
-                      className="w-5 h-5 rounded-full mt-1"
+                      width={32}
+                      height={32}
+                      className="w-8 h-8 rounded-full mt-1 flex-shrink-0"
                     />
-                    <div className="bg-[#2A2A2A] text-white p-2 rounded-lg">
+                    <div className="bg-[#2A2A2A] text-white p-3 rounded-2xl rounded-tl-md">
                       <div className="typing-indicator">
                         <div className="typing-dot"></div>
                         <div className="typing-dot"></div>
@@ -413,7 +481,7 @@ export default function ChatPage() {
             </div>
           ) : (
             <div className="flex items-center justify-center h-full">
-              <p className="text-gray-400 poppins-regular text-xs">
+              <p className="text-gray-400 poppins-regular text-sm">
                 Pilih atau buat chat baru untuk memulai
               </p>
             </div>

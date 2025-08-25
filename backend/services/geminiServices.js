@@ -126,7 +126,7 @@ class GeminiService {
       setTimeout(() => {
         process.kill();
         reject(new Error("Request timeout"));
-      }, 30000);
+      }, 120000); // Increased timeout to 2 minutes for LangChain initialization
     });
   }
 
