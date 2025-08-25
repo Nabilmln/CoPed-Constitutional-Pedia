@@ -80,11 +80,23 @@ export default function ChatPage() {
   };
 
   const handleSendMessage = async () => {
-    if (!currentMessage.trim() || !activeRoom) return;
+    if (!currentMessage.trim()) return;
 
     const userMessage = currentMessage.trim();
 
     try {
+      // If no active room, create one with the question as title
+      let roomId = activeRoom;
+      if (!roomId) {
+        const newRoom = await createChatWithTitle(userMessage);
+        if (newRoom) {
+          roomId = newRoom.roomId;
+        } else {
+          setError("Gagal membuat chat baru");
+          return;
+        }
+      }
+
       // Immediately show user message
       setCurrentMessage("");
       setIsTyping(true);
@@ -105,11 +117,13 @@ export default function ChatPage() {
 
       setChatRooms((prev) =>
         prev.map((room) =>
-          room.roomId === activeRoom
+          room.roomId === roomId
             ? {
                 ...room,
                 messages: [...room.messages, tempMessage],
                 lastActivity: new Date(),
+                // Update title with first question if it's still "Chat Baru"
+                title: room.messages.length === 0 ? userMessage : room.title,
               }
             : room
         )
@@ -117,7 +131,7 @@ export default function ChatPage() {
 
       const response = await apiService.askQuestion(
         userMessage,
-        activeRoom,
+        roomId,
         selectedModel === "native" ? "native" : "langchain"
       );
 
@@ -125,7 +139,7 @@ export default function ChatPage() {
         // Update the last message with the actual response
         setChatRooms((prev) =>
           prev.map((room) =>
-            room.roomId === activeRoom
+            room.roomId === roomId
               ? {
                   ...room,
                   messages: room.messages.map((msg, index) =>
@@ -188,22 +202,50 @@ export default function ChatPage() {
         const newRoom = response.data.room;
         setChatRooms((prev) => [newRoom, ...prev]);
         setActiveRoom(newRoom.roomId);
+        return newRoom;
       }
     } catch (error) {
       console.error("Failed to create new chat:", error);
       setError("Gagal membuat chat baru");
     }
+    return null;
+  };
+
+  const createChatWithTitle = async (title: string) => {
+    try {
+      const response = await apiService.createChatRoom(title);
+      if (response.success) {
+        const newRoom = response.data.room;
+        setChatRooms((prev) => [newRoom, ...prev]);
+        setActiveRoom(newRoom.roomId);
+        return newRoom;
+      }
+    } catch (error) {
+      console.error("Failed to create new chat:", error);
+      setError("Gagal membuat chat baru");
+    }
+    return null;
   };
 
   const handleRenameRoom = async (roomId: string, newTitle: string) => {
+    if (!newTitle.trim()) {
+      setIsRenaming(null);
+      return;
+    }
+
     try {
-      const response = await apiService.updateChatRoomTitle(roomId, newTitle);
+      const response = await apiService.updateChatRoomTitle(
+        roomId,
+        newTitle.trim()
+      );
       if (response.success) {
         setChatRooms((prev) =>
           prev.map((room) =>
-            room.roomId === roomId ? { ...room, title: newTitle } : room
+            room.roomId === roomId ? { ...room, title: newTitle.trim() } : room
           )
         );
+      } else {
+        setError("Gagal mengubah nama chat");
       }
     } catch (error) {
       console.error("Failed to rename room:", error);
@@ -215,12 +257,21 @@ export default function ChatPage() {
 
   const handleDeleteRoom = async (roomId: string) => {
     try {
-      await apiService.deleteChatRoom(roomId);
-      setChatRooms((prev) => prev.filter((room) => room.roomId !== roomId));
-      if (activeRoom === roomId) {
-        setActiveRoom(chatRooms.length > 1 ? chatRooms[0].roomId : null);
+      const response = await apiService.deleteChatRoom(roomId);
+      if (response.success) {
+        setChatRooms((prev) => prev.filter((room) => room.roomId !== roomId));
+        if (activeRoom === roomId) {
+          const remainingRooms = chatRooms.filter(
+            (room) => room.roomId !== roomId
+          );
+          setActiveRoom(
+            remainingRooms.length > 0 ? remainingRooms[0].roomId : null
+          );
+        }
+        setShowDropdown(null);
+      } else {
+        setError("Gagal menghapus chat");
       }
-      setShowDropdown(null);
     } catch (error) {
       console.error("Failed to delete room:", error);
       setError("Gagal menghapus chat");
@@ -423,31 +474,47 @@ export default function ChatPage() {
                             {message.answer}
                           </div>
 
-                          {/* Message metadata */}
-                          <div className="mt-3 text-xs text-gray-400 border-t border-gray-600 pt-2">
-                            <div className="flex justify-between items-center">
-                              <span>Model: {message.geminiModel}</span>
-                              <span>
-                                Akurasi: {message.accuracy?.toFixed(1)}%
+                          {/* Simplified metadata with box design */}
+                          <div className="mt-3 flex justify-between items-center">
+                            {/* System box - Left */}
+                            <div className="bg-gray-700/50 px-2 py-1 rounded-lg border border-gray-600">
+                              <span className="text-xs text-gray-300 font-medium">
+                                {message.ragSystem === "native"
+                                  ? "Native RAG"
+                                  : message.ragSystem === "langchain_enhanced"
+                                  ? "LangChain Enhanced"
+                                  : message.ragSystem === "langchain"
+                                  ? "LangChain"
+                                  : message.ragSystem || "Unknown"}
                               </span>
                             </div>
-                            <div className="flex justify-between items-center mt-1">
-                              <span>Sistem: {message.ragSystem}</span>
-                              <span>Waktu: {message.responseTime}ms</span>
+
+                            {/* Response time box - Right */}
+                            <div className="bg-gray-700/50 px-2 py-1 rounded-lg border border-gray-600">
+                              <span className="text-xs text-gray-300 font-medium">
+                                {message.responseTime
+                                  ? message.responseTime >= 60000
+                                    ? `${Math.round(
+                                        message.responseTime / 60000
+                                      )}m ${Math.round(
+                                        (message.responseTime % 60000) / 1000
+                                      )}s`
+                                    : `${Math.round(
+                                        message.responseTime / 1000
+                                      )}s`
+                                  : "0s"}
+                              </span>
                             </div>
-                            {message.sources && message.sources.length > 0 && (
-                              <div className="mt-1">
-                                <span>
-                                  Sumber: {message.sources.join(", ")}
-                                </span>
-                              </div>
-                            )}
-                            {message.isError && (
-                              <div className="mt-1 text-red-400">
-                                Error: {message.errorMessage}
-                              </div>
-                            )}
                           </div>
+
+                          {/* Error message if any */}
+                          {message.isError && (
+                            <div className="mt-2 bg-red-900/30 border border-red-700 rounded-lg px-2 py-1">
+                              <span className="text-xs text-red-300">
+                                Error: {message.errorMessage}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -482,37 +549,35 @@ export default function ChatPage() {
           ) : (
             <div className="flex items-center justify-center h-full">
               <p className="text-gray-400 poppins-regular text-sm">
-                Pilih atau buat chat baru untuk memulai
+                Mulai chat dengan mengetik pertanyaan Anda di bawah
               </p>
             </div>
           )}
         </div>
 
-        {/* Message Input - Reduced padding */}
-        {activeRoom && (
-          <div className="p-2">
-            <div className="relative w-[600px] mx-auto">
-              <input
-                type="text"
-                value={currentMessage}
-                onChange={(e) => setCurrentMessage(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === "Enter") {
-                    handleSendMessage();
-                  }
-                }}
-                placeholder="apa itu kewarganegaraan?"
-                className="w-full bg-transparent text-white px-3 py-2 pr-10 rounded-lg poppins-regular placeholder-gray-400 border border-gray-600 focus:border-[#F60] outline-none text-xs"
-              />
-              <button
-                onClick={handleSendMessage}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-[#F60] hover:text-[#e55500] transition-colors"
-              >
-                <MagnifyingGlassIcon className="w-4 h-4" />
-              </button>
-            </div>
+        {/* Message Input - Always show, even when no active room */}
+        <div className="p-2">
+          <div className="relative w-[600px] mx-auto">
+            <input
+              type="text"
+              value={currentMessage}
+              onChange={(e) => setCurrentMessage(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === "Enter") {
+                  handleSendMessage();
+                }
+              }}
+              placeholder="apa itu kewarganegaraan?"
+              className="w-full bg-transparent text-white px-3 py-2 pr-10 rounded-lg poppins-regular placeholder-gray-400 border border-gray-600 focus:border-[#F60] outline-none text-xs"
+            />
+            <button
+              onClick={handleSendMessage}
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-[#F60] hover:text-[#e55500] transition-colors"
+            >
+              <MagnifyingGlassIcon className="w-4 h-4" />
+            </button>
           </div>
-        )}
+        </div>
       </main>
     </div>
   );
