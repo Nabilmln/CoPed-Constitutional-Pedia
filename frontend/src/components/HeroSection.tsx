@@ -8,7 +8,7 @@ function SplineVisualization() {
   return (
     <div
       style={{
-        width: "570px",
+        width: "470px",
         height: "438px",
         borderRadius: "20px",
         overflow: "hidden",
@@ -36,18 +36,20 @@ function HeroSection() {
       {/* Left Content */}
       <div className="flex-1 max-w-3xl">
         {/* Main Title */}
-        <h1 className="hero-title mb-8">Temukan Jawaban dalam Co-Ped AI</h1>
+        <h1 className="hero-title mb-8">
+          Co-Ped AI: Sahabat Pintar Memahami Konstitusi
+        </h1>
 
         {/* Description */}
         <p className="hero-description mb-8">
-          Menjawab segala pertanyaan yang ingin kamu ketahui tentang UUD 1945
+          Co-Ped AI membantu kamu memahami isi dan makna Undang-Undang Dasar 1945 dengan cepat, akurat, dan mudah. Mulai dari pembukaan, pasal-pasal, hingga amandemen terbaru, semua bisa kamu tanyakan langsung.
         </p>
 
         {/* Search Box */}
         <div className="search-container">
-          <div className="search-text">Temukan Jawabanmu</div>
+          <div className="search-text">Tanyakan Apapun</div>
           <button className="lets-chat-button" onClick={handleTryNow}>
-            Let's Chat
+            UUD 1945
           </button>
         </div>
       </div>

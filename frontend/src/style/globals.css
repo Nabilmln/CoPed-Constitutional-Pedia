@@ -169,7 +169,7 @@ main {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 32px 128px;
+  padding: 32px 64px;
 }
 
 @keyframes fadeIn {
@@ -231,14 +231,14 @@ main {
   font-family: var(--font-poppins), "Poppins", sans-serif;
   font-size: 15px;
   font-style: normal;
-  font-weight: 400;
+  font-weight: 200;
   line-height: normal;
   animation: slideInLeft 1s ease-out 0.4s both;
 }
 
 /* Search Container */
 .search-container {
-  width: 370px;
+  width: 330px;
   height: 50px;
   flex-shrink: 0;
   border-radius: 60px;
@@ -247,7 +247,7 @@ main {
   display: flex;
   align-items: center;
   padding: 9px;
-  gap: 16px;
+  /* gap: 8px; */
   transition: all 0.3s ease;
   animation: slideInUp 1s ease-out 0.6s both;
 }
@@ -286,7 +286,7 @@ main {
   font-style: normal;
   font-weight: 400;
   line-height: normal;
-  padding-left: 24px;
+  /* padding-left: 24px; */
 }
 
 .search-input::placeholder {
@@ -295,7 +295,7 @@ main {
 
 /* Search Text */
 .search-text {
-  flex: 1;
+  /* flex: 1; */
   color: #fff;
   font-family: var(--font-poppins), "Poppins", sans-serif;
   font-size: 16px;
@@ -303,6 +303,8 @@ main {
   font-weight: 400;
   line-height: normal;
   padding-left: 24px;
+  padding-right: 19px;
+  /* margin-right: 16px; */
   display: flex;
   align-items: center;
 }
@@ -329,8 +331,8 @@ main {
 
 /* Spline Container */
 .spline-container {
-  width: 570px;
-  height: 2 38px;
+  width: 470px;
+  height: 238px;
   flex-shrink: 0;
   aspect-ratio: 70/73;
   overflow: hidden;
@@ -410,7 +412,7 @@ main {
 .section-two {
   background: transparent; /* Ubah dari #1a1a1a ke transparan untuk Threads background */
   min-height: 100vh;
-  padding: 80px 32px;
+  padding: 100px 16px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -423,19 +425,46 @@ main {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 40px;
+  gap: 20px;
 }
 
 .section-two-title {
   color: #fff;
   text-align: center;
   font-family: var(--font-michroma), "Michroma", sans-serif;
-  font-size: 55px;
+  font-size: 20px; /* Ukuran yang lebih seimbang */
   font-style: normal;
   font-weight: 400;
   line-height: normal;
   margin: 0;
   animation: slideInUp 1s ease-out;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80px; /* Adjust height */
+}
+
+/* Custom styling for typewriter effect in SectionTwo */
+.section-two-title .overflow-hidden div {
+  font-family: var(--font-michroma), "Michroma", sans-serif !important;
+  color: #fff !important;
+  font-weight: 400 !important;
+  font-size: 40px !important; /* Ensure consistent size */
+}
+
+/* Make all text in typewriter white */
+.section-two-title span {
+  color: #fff !important;
+}
+
+/* Override blue colors to white, keep orange for Co-Ped AI */
+.section-two-title .text-blue-500 {
+  color: #fff !important;
+}
+
+/* Keep Co-Ped AI orange */
+.section-two-title .text-orange-500 {
+  color: #f60 !important;
 }
 
 .section-two-description {
@@ -444,14 +473,14 @@ main {
   font-family: var(--font-poppins), "Poppins", sans-serif;
   font-size: 15px;
   font-style: normal;
-  font-weight: 400;
+  font-weight: 200;
   line-height: normal;
   margin: 0;
   max-width: 600px;
   animation: slideInUp 1s ease-out 0.2s both;
 }
 
-.section-two-buttons {
+/* .section-two-buttons {
   display: flex;
   gap: 20px;
   align-items: center;
@@ -494,7 +523,7 @@ main {
 
 .try-now-secondary-button:hover {
   background: rgba(255, 255, 255, 0.12);
-}
+} */
 
 .cards-container {
   display: flex;
@@ -671,7 +700,8 @@ main {
   }
 
   .section-two-title {
-    font-size: 42px;
+    font-size: 24px; /* Reduced from 42px */
+    min-height: 80px; /* Adjusted for smaller text */
   }
 
   .cards-container {
@@ -849,8 +879,9 @@ main {
   }
 
   .section-two-title {
-    font-size: 28px;
+    font-size: 18px; /* Reduced from 28px */
     line-height: 1.2;
+    min-height: 70px; /* Adjusted for smaller text */
   }
 
   .section-two-description {

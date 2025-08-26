@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { TypewriterEffectSmooth } from "./ui/typewriter-effect";
 
 // Client Component untuk SectionTwo - tidak async karena menggunakan 'use client'
 function SectionTwo() {
@@ -15,29 +16,63 @@ function SectionTwo() {
     // TODO: Navigate to chat page
   };
 
+  // Words for typewriter effect - all white
+  const words = [
+    {
+      text: "Belajar",
+    },
+    {
+      text: "UUD",
+    },
+    {
+      text: "1945",
+    },
+    {
+      text: "Lebih",
+    },
+    {
+      text: "Mudah",
+    },
+    {
+      text: "dengan",
+    },
+    {
+      text: "Co-Ped",
+      className: "text-orange-500 dark:text-orange-500",
+    },
+    {
+      text: "AI",
+      className: "text-orange-500 dark:text-orange-500",
+    },
+  ];
+
   return (
     <section id="section-2" className="section-two">
       <div className="section-two-container">
-        {/* Title */}
-        <h2 className="section-two-title">
-          Efisiensi dan Pelayanan yang tersedia
-        </h2>
+        {/* Title with Typewriter Effect */}
+        <div className="section-two-title">
+          <TypewriterEffectSmooth
+            words={words}
+            className="justify-center"
+            cursorClassName="bg-orange-500"
+          />
+        </div>
 
         {/* Description */}
         <p className="section-two-description">
-          Memiliki dua model yang menggunakan metode berbeda dalam menjawab
-          pertanyaan mu
+          Co-Ped AI membantu kamu memahami UUD 1945 dengan cepat, akurat, dan
+          mudah melalui teknologi kecerdasan buatan
         </p>
 
         {/* Buttons */}
-        <div className="section-two-buttons">
+        {/* <div className="section-two-buttons">
           <button className="ayo-coba-button" onClick={handleAyoCoba}>
             Ayo Coba!
           </button>
           <button className="try-now-secondary-button" onClick={handleTryNow}>
             Try now
           </button>
-        </div>
+        </div> */}
 
         {/* Five Cards Container */}
         <div className="cards-container">

@@ -48,19 +48,19 @@ function Header() {
           onClick={handleHomeClick}
           className="michroma-regular text-white text-4 hover:text-gray-300 transition-colors cursor-pointer bg-transparent border-none"
         >
-          Home
+          Beranda
         </button>
         <button
           onClick={handleKonsepClick}
           className="michroma-regular text-white text-4 hover:text-gray-300 transition-colors cursor-pointer bg-transparent border-none"
         >
-          Konsep
+          Tentang
         </button>
       </nav>
 
       {/* Chat Button */}
       <button onClick={handleChatClick} className="login-button">
-        Chat
+        Tekan untuk bertanya!
       </button>
     </header>
   );
