@@ -93,3 +93,67 @@
 .chat-messages::-webkit-scrollbar-thumb:hover {
   background: #718096;
 }
+
+/* Formatted Response Styling */
+.formatted-response {
+  line-height: 1.6;
+  color: #e2e8f0;
+}
+
+.formatted-response p {
+  margin-bottom: 12px;
+}
+
+.formatted-response .highlight {
+  color: #f97316;
+  font-weight: 600;
+  background: rgba(249, 115, 22, 0.1);
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.formatted-response .response-header {
+  color: #f97316;
+  font-weight: 700;
+  font-size: 1.1em;
+  margin: 16px 0 8px 0;
+  border-left: 3px solid #f97316;
+  padding-left: 12px;
+}
+
+.formatted-response ul {
+  margin: 8px 0;
+  padding-left: 20px;
+  list-style: none;
+}
+
+.formatted-response li {
+  margin-bottom: 6px;
+  position: relative;
+}
+
+.formatted-response li::before {
+  content: "•";
+  color: #f97316;
+  font-weight: bold;
+  position: absolute;
+  left: -15px;
+}
+
+.formatted-response ol {
+  margin: 8px 0;
+  padding-left: 20px;
+  counter-reset: item;
+}
+
+.formatted-response ol li {
+  counter-increment: item;
+  margin-bottom: 6px;
+}
+
+.formatted-response ol li::before {
+  content: counter(item) ".";
+  color: #f97316;
+  font-weight: bold;
+  margin-right: 8px;
+}

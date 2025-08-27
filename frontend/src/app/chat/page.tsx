@@ -10,6 +10,7 @@ import {
   ArrowLeftIcon,
 } from "@heroicons/react/24/outline";
 import { apiService, ChatMessage, ChatRoom } from "@/services/api";
+import FormattedResponse from "@/components/FormattedResponse";
 
 // Interface untuk tipe data
 interface GroupedChats {
@@ -470,9 +471,10 @@ export default function ChatPage() {
                           className="w-8 h-8 rounded-full mt-1 flex-shrink-0"
                         />
                         <div className="bg-[#2A2A2A] text-white p-3 rounded-2xl rounded-tl-md max-w-2xl poppins-regular text-sm">
-                          <div className="whitespace-pre-wrap">
-                            {message.answer}
-                          </div>
+                          <FormattedResponse
+                            content={message.answer}
+                            className="mb-0"
+                          />
 
                           {/* Simplified metadata with box design */}
                           <div className="mt-3 flex justify-between items-center">
