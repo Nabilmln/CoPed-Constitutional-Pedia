@@ -1,109 +1,214 @@
 # CoPed - Constitutional Pedia Indonesia
 
-## Panduan Instalasi dan Menjalankan Aplikasi
+**Platform Edukasi Digital UUD 1945 dengan AI-Powered RAG System** 🇮🇩
 
-### Prasyarat
+## 📖 Deskripsi Project
 
-- Node.js (versi 18 atau lebih baru)
-- Python 3.11 atau 3.12
-- MongoDB Atlas account (untuk database)
-- Google API Key untuk Gemini (untuk AI chatbot)
+CoPed (Constitutional Pedia) adalah platform edukasi digital inovatif yang memungkinkan pengguna mempelajari UUD 1945 secara interaktif menggunakan AI chatbot canggih. Project ini menggabungkan teknologi RAG (Retrieval-Augmented Generation) dengan dokumen konstitusi resmi Indonesia untuk memberikan jawaban yang akurat dan komprehensif.
 
-### Struktur Aplikasi
+### 🎯 **Tujuan Utama**
+
+- Menyediakan akses mudah ke informasi konstitusi Indonesia
+- Meningkatkan literasi hukum masyarakat melalui teknologi AI
+- Memberikan pengalaman belajar yang interaktif dan engaging
+- Melestarikan dan mempromosikan nilai-nilai konstitusi
+
+## 🛠️ Tech Stack
+
+### **Frontend (Next.js 15.4.6)**
+
+- **Framework**: Next.js 15.4.6 dengan React 19.1.0
+- **TypeScript**: Type-safe development dengan TypeScript 5
+- **Styling**: Tailwind CSS 4 dengan custom orange branding
+- **Icons**: Heroicons, Lucide React
+- **Animations**: Motion, Framer Motion untuk typewriter effects
+- **3D Graphics**: Spline (@splinetool/react-spline)
+- **UI Components**: Custom shadcn/ui components
+
+### **Backend (Node.js)**
+
+- **Runtime**: Node.js dengan Express.js
+- **Database**: MongoDB Atlas dengan Mongoose ODM
+- **Authentication**: JWT-based dengan bcryptjs
+- **Environment**: dotenv configuration
+- **Development**: Nodemon untuk hot reload
+- **CORS**: Configured untuk development dan production
+
+### **AI & RAG Systems (Python)**
+
+- **Google AI**: Gemini 2.5 Flash (Native RAG) & Gemini 1.5 Flash (LangChain)
+- **LangChain**: Comprehensive RAG framework dengan optimized search
+- **Vector Database**: ChromaDB untuk embedding storage
+- **Document Processing**: PyPDF2, pypdf untuk PDF parsing
+- **Embeddings**: Sentence Transformers, FAISS-CPU
+- **Text Analysis**: Tiktoken untuk token counting
+
+## ⚙️ Panduan Instalasi dan Setup
+
+### **Prasyarat Sistem**
+
+- **Node.js**: v18+ (Recommended: v20+)
+- **Python**: 3.11 atau 3.12
+- **Database**: MongoDB Atlas account
+- **API Key**: Google Gemini API key
+- **OS**: Windows 10/11, macOS, atau Linux
+
+### **Struktur Project**
 
 ```
 CoPed/
-├── backend/           # Node.js Express Server
-├── frontend/          # Next.js React Application
-└── start-app.bat      # Script untuk menjalankan kedua aplikasi
+├── 📁 backend/                    # Node.js Express Server
+│   ├── 📁 controllers/            # API controllers
+│   ├── 📁 routes/                 # Express routes
+│   ├── 📁 services/               # Business logic
+│   ├── 📁 gemini API/             # Python RAG systems
+│   │   ├── 📄 langchain_enhanced_rag.py
+│   │   ├── 📄 api_bridge.py
+│   │   ├── 📄 warmup_langchain.py
+│   │   ├── 📁 data/               # Constitutional PDFs
+│   │   ├── 📁 chroma_db/          # Vector database
+│   │   └── 📄 requirements.txt    # Python dependencies
+│   ├── 📄 app.js                  # Main server file
+│   ├── 📄 start_optimized.py      # Optimized startup script
+│   └── 📄 package.json
+├── 📁 frontend/                   # Next.js React Application
+│   ├── 📁 src/
+│   │   ├── 📁 app/                # App router pages
+│   │   │   ├── 📁 chat/           # Chat interface
+│   │   │   ├── 📁 home/           # Landing page
+│   │   │   └── 📄 layout.tsx      # Root layout
+│   │   ├── 📁 components/         # React components
+│   │   │   ├── 📄 FormattedResponse.tsx
+│   │   │   ├── 📄 Header.tsx
+│   │   │   ├── 📄 HeroSection.tsx
+│   │   │   └── 📄 SectionTwo.tsx
+│   │   ├── 📁 lib/                # Utilities
+│   │   │   └── 📄 markdownFormatter.ts
+│   │   ├── 📁 services/           # API services
+│   │   │   └── 📄 api.ts
+│   │   └── 📁 hooks/              # Custom React hooks
+│   ├── 📁 public/                 # Static assets
+│   │   ├── 🖼️ coped-logo-*.png
+│   │   └── 🖼️ robo-picture.jpeg
+│   └── 📄 package.json
+├── 📄 start-app.bat               # Windows launcher script
+└── 📄 README.md                   # This file
 ```
 
-### Setup Backend
+### 🔧 **Setup Backend**
 
-1. **Masuk ke folder backend:**
+1. **📂 Masuk ke folder backend:**
 
    ```bash
    cd backend
    ```
 
-2. **Install dependencies:**
+2. **📦 Install Node.js dependencies:**
 
    ```bash
    npm install
    ```
 
-3. **Setup environment variables:**
-   Buat file `.env` di folder backend:
-
-   ```env
-   # Database
-   MONGODB_URI=your_mongodb_atlas_connection_string
-
-   # JWT
-   JWT_SECRET=your_jwt_secret_key
-   JWT_EXPIRE=30d
-
-   # CORS
-   ALLOWED_ORIGINS=http://localhost:3000
-
-   # Server
-   PORT=5000
-   NODE_ENV=development
-
-   # Gemini API (optional untuk testing)
-   GEMINI_API_KEY=your_gemini_api_key
-   ```
-
-4. **Install Python dependencies untuk Gemini API:**
+3. **🐍 Setup Python environment dan dependencies:**
 
    ```bash
+   # Masuk ke folder Gemini API
    cd "gemini API"
+
+   # Install Python packages
    pip install -r requirements.txt
+
+   # Kembali ke folder backend
    cd ..
    ```
 
-5. **Jalankan backend:**
+4. **⚙️ Setup environment variables:**
+
+   **🔒 IMPORTANT**: Copy `.env.example` to `.env` dan isi dengan credentials actual Anda:
+   
    ```bash
-   npm start
+   # Copy template file
+   cp backend/.env.example backend/.env
    ```
-   Server akan berjalan di `http://localhost:5000`
 
-### Setup Frontend
+   Edit file `.env` dengan credentials yang benar:
+   ```env
+   # 🗄️ Database Configuration (Get from MongoDB Atlas)
+   MONGODB_URI=mongodb+srv://your_username:your_password@your_cluster.mongodb.net/CoPed?retryWrites=true&w=majority
 
-1. **Masuk ke folder frontend:**
+   # 🔐 JWT Configuration (Generate strong secret)
+   JWT_SECRET=your_super_secret_jwt_key_minimum_32_characters
+   JWT_EXPIRE=30d
+
+   # 🌐 CORS Configuration
+   ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001
+
+   # 🚀 Server Configuration
+   PORT=5000
+   NODE_ENV=development
+
+   # 🤖 Gemini API Configuration (Get from Google AI Studio)
+   GEMINI_API_KEY=your_gemini_api_key_here
+   ```
+
+   **⚠️ Security Note**: File `.env` sudah ada di `.gitignore` dan tidak akan ter-commit ke repository.
+   ```
+
+5. **🚀 Jalankan backend:**
+
+   ```bash
+   # Metode 1: Standard startup
+   npm start
+
+   # Metode 2: Optimized startup dengan LangChain warm-up
+   python start_optimized.py
+   ```
+
+   Backend akan tersedia di: `http://localhost:5000`
+
+### 🎨 **Setup Frontend**
+
+1. **📂 Masuk ke folder frontend:**
 
    ```bash
    cd frontend
    ```
 
-2. **Install dependencies:**
+2. **📦 Install dependencies:**
 
    ```bash
    npm install
    ```
 
-3. **Setup environment variables:**
-   File `.env.local` sudah dibuat dengan konfigurasi:
+3. **⚙️ Environment configuration:**
+
+   File `.env.local` (sudah dikonfigurasi):
 
    ```env
+   # 🔗 API Configuration
    NEXT_PUBLIC_API_URL=http://localhost:5000/api
    ```
 
-4. **Jalankan frontend:**
+4. **🚀 Jalankan frontend:**
+
    ```bash
    npm run dev
    ```
-   Aplikasi akan berjalan di `http://localhost:3000`
 
-### Menjalankan Kedua Aplikasi Sekaligus
+   Frontend akan tersedia di: `http://localhost:3000`
 
-Gunakan script yang telah disediakan:
+### 🚀 **Quick Start - Jalankan Semua Sekaligus**
+
+**Windows Users:**
 
 ```bash
-# Windows
+# Double-click atau run di terminal
 ./start-app.bat
+```
 
-# Manual (buka 2 terminal)
+**Manual (Cross-platform):**
+
+```bash
 # Terminal 1 - Backend
 cd backend && npm start
 
@@ -111,216 +216,832 @@ cd backend && npm start
 cd frontend && npm run dev
 ```
 
-### Fitur Aplikasi
+**Optimized Startup:**
 
-#### 1. **Authentication System**
+```bash
+# Terminal 1 - Backend dengan warm-up
+cd backend && python start_optimized.py
 
-- Register/Login pengguna
-- JWT-based authentication
-- Protected routes
+# Terminal 2 - Frontend
+cd frontend && npm run dev
+```
 
-#### 2. **Chat System**
+## 🌟 **Fitur Utama Aplikasi**
 
-- Real-time chat dengan AI chatbot
-- History chat disimpan di database
-- Multiple chat rooms per user
-- **Enhanced UI/UX**:
-  - Auto-create chat rooms dengan judul otomatis
-  - Improved message display dengan formatted responses
-  - Typewriter effect pada landing page
-  - Custom orange branding untuk Co-Ped AI
+### 🔐 **1. Authentication System**
 
-#### 3. **RAG (Retrieval-Augmented Generation) System**
+- **User Registration & Login** dengan validasi lengkap
+- **JWT-based Authentication** untuk session management
+- **Protected Routes** dengan middleware authorization
+- **Password Security** menggunakan bcryptjs hashing
+- **Session Persistence** dengan localStorage management
 
-- **Native RAG**: Menggunakan Gemini 2.5 Flash untuk pertanyaan hukum (Akurasi: 96.8%)
-- **LangChain Enhanced RAG**: Menggunakan Gemini 1.5 Flash dengan optimized search (Akurasi: 89.2%)
-- Auto-selection berdasarkan keyword analisis konstitusi
-- Manual selection melalui dropdown
-- **Advanced Features**:
-  - Constitutional document processing (UUD 1945, UUD 1954)
-  - Vector database dengan ChromaDB (691 chunks)
-  - Warm-up mechanism untuk performa optimal
-  - Extended timeout handling (120s) untuk query kompleks
+### 💬 **2. Advanced Chat System**
 
-#### 4. **Frontend Features**
+- **Real-time AI Chatbot** dengan respons cepat dan akurat
+- **Multiple Chat Rooms** per user dengan manajemen otomatis
+- **Chat History Persistence** tersimpan di MongoDB
+- **Auto-Chat Creation** dengan judul otomatis dari pertanyaan
+- **Enhanced UI/UX Features:**
+  - ⚡ Real-time typing indicators
+  - 🎨 Custom orange branding untuk Co-Ped AI
+  - 📱 Responsive design untuk semua device
+  - 🔄 Improved message display dengan formatted responses
+  - ✨ Smooth animations dan transitions
 
-- Responsive design dengan Tailwind CSS
-- Real-time typing indicators
-- Message metadata (akurasi, response time, sumber)
-- Error handling dan loading states
-- **Advanced AI Response Formatting**:
-  - Markdown to HTML conversion untuk respons AI
-  - **Bold text** otomatis diformat dengan styling orange
-  - Header dan sub-header dengan numbering yang elegant
-  - Bullet points dengan custom styling
-  - Responsive text formatting dan spacing
+### 🧠 **3. Dual RAG (Retrieval-Augmented Generation) System**
 
-### API Endpoints
+#### **🚀 Native RAG System**
 
-#### Authentication
+- **Model**: Google Gemini 2.5 Flash
+- **Akurasi**: 96.8% untuk pertanyaan hukum konstitusi
+- **Response Time**: ~4-8 detik
+- **Keunggulan**: Multi-document processing yang optimal
+- **Use Case**: Pertanyaan spesifik tentang pasal, ayat, UUD
 
-- `POST /api/auth/register` - Registrasi pengguna baru
-- `POST /api/auth/login` - Login pengguna
+#### **⚡ LangChain Enhanced RAG**
 
-#### Chat Management
+- **Model**: Google Gemini 1.5 Flash dengan LangChain framework
+- **Akurasi**: 89.2% dengan optimized search
+- **Response Time**: ~15-30 detik
+- **Keunggulan**: Context-aware dengan advanced retrieval
+- **Use Case**: Pertanyaan kompleks yang membutuhkan analisis mendalam
 
-- `GET /api/chat/rooms` - Ambil daftar chat rooms
-- `POST /api/chat/rooms` - Buat chat room baru
-- `GET /api/chat/rooms/:roomId/messages` - Ambil pesan dalam room
-- `DELETE /api/chat/rooms/:roomId` - Hapus chat room
+#### **🎯 Smart Auto-Selection**
 
-#### RAG Processing
+- **Constitutional Keyword Detection**: Sistem otomatis mendeteksi keyword hukum
+- **Intelligent Routing**: Auto-route ke Native RAG untuk pertanyaan hukum
+- **Manual Override**: User dapat memilih system RAG secara manual
+- **Fallback Mechanism**: Sistem backup jika primary RAG gagal
 
-- `POST /api/chat/ask` - Kirim pertanyaan ke sistem RAG
-  ```json
-  {
-    "question": "Apa itu pasal 28 UUD 1945?",
-    "roomId": "chat-room-id",
-    "ragSystem": "native" | "langchain" | "auto"
+### 🎨 **4. Frontend Excellence**
+
+- **Next.js 15.4.6** dengan React 19.1.0 dan TypeScript
+- **Tailwind CSS 4** untuk styling yang konsisten
+- **Advanced AI Response Formatting:**
+  - 🟠 **Bold text** (`**text**`) → Orange highlighted styling
+  - 📝 Headers dengan numbering otomatis yang elegant
+  - • Bullet points dengan custom orange styling
+  - 📄 Optimized paragraph spacing dan typography
+  - 🔄 Real-time markdown to HTML conversion
+
+#### **🎭 Interactive Elements**
+
+- **Typewriter Effect**: Landing page dengan efek typewriter yang smooth
+- **3D Graphics**: Spline integration untuk visual yang menarik
+- **Custom Fonts**: Michroma, Poppins untuk branding yang konsisten
+- **Loading States**: Skeleton loading dan smooth transitions
+- **Error Handling**: User-friendly error messages dan recovery
+
+### 📊 **5. Performance & Analytics**
+
+- **Response Metadata**: Akurasi, response time, source tracking
+- **System Monitoring**: Real-time system performance metrics
+- **Error Tracking**: Comprehensive error logging dan reporting
+- **Cache Management**: Optimized caching untuk performa optimal
+
+## 🛣️ **API Documentation**
+
+### **🔐 Authentication Endpoints**
+
+```http
+POST /api/auth/register
+Content-Type: application/json
+
+{
+  "username": "user123",
+  "email": "user@example.com",
+  "password": "securePassword123"
+}
+
+Response: {
+  "success": true,
+  "token": "jwt_token_here",
+  "user": { "id": "user_id", "username": "user123" }
+}
+```
+
+```http
+POST /api/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "securePassword123"
+}
+
+Response: {
+  "success": true,
+  "token": "jwt_token_here",
+  "user": { "id": "user_id", "username": "user123" }
+}
+```
+
+### **💬 Chat Management Endpoints**
+
+```http
+GET /api/chat/rooms
+Authorization: Bearer <jwt_token>
+
+Response: {
+  "success": true,
+  "chatRooms": [
+    {
+      "roomId": "room_123",
+      "title": "Pasal 28 UUD 1945",
+      "lastActivity": "2025-08-27T10:30:00.000Z",
+      "messages": [...]
+    }
+  ]
+}
+```
+
+```http
+POST /api/chat/rooms
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
+
+{
+  "title": "Pertanyaan tentang UUD 1945"
+}
+
+Response: {
+  "success": true,
+  "roomId": "new_room_id",
+  "message": "Chat room created successfully"
+}
+```
+
+```http
+DELETE /api/chat/rooms/:roomId
+Authorization: Bearer <jwt_token>
+
+Response: {
+  "success": true,
+  "message": "Chat room deleted successfully"
+}
+```
+
+### **🤖 RAG Processing Endpoint**
+
+```http
+POST /api/chat/ask
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
+
+{
+  "question": "Apa bunyi pasal 28 UUD 1945?",
+  "roomId": "room_123",
+  "ragSystem": "native" | "langchain_enhanced" | "auto"
+}
+
+Response: {
+  "success": true,
+  "data": {
+    "question": "Apa bunyi pasal 28 UUD 1945?",
+    "answer": "**Pasal 28 UUD 1945:** Kemerdekaan berserikat dan berkumpul...",
+    "system": "native",
+    "accuracy": 96.8,
+    "responseTime": 4200,
+    "sources": ["UUD1945.pdf", "UUD1945-BPHN.pdf"],
+    "geminiModel": "gemini-2.5-flash",
+    "isError": false,
+    "errorMessage": null
   }
-  ```
+}
+```
 
-### Cara Kerja RAG System
+## 🔍 **Cara Kerja RAG System**
 
-1. **Auto Selection**:
+### **🎯 1. Auto Selection (Smart Routing)**
 
-   - Sistem menganalisis pertanyaan
-   - Jika mengandung keyword hukum → Native RAG
-   - Jika pertanyaan umum → LangChain RAG
+```mermaid
+graph TD
+    A[User Question] --> B{Constitutional Keywords?}
+    B -->|Yes| C[Native RAG]
+    B -->|No| D[LangChain Enhanced RAG]
+    C --> E[Gemini 2.5 Flash]
+    D --> F[Gemini 1.5 Flash + LangChain]
+    E --> G[Response with 96.8% Accuracy]
+    F --> H[Response with 89.2% Accuracy]
+```
 
-2. **Manual Selection**:
+**Constitutional Keywords Detection:**
 
-   - User memilih "Native" untuk multi-doc processing
-   - User memilih "LangChain" untuk RAG langchain
+- UUD, pasal, ayat, undang-undang, konstitusi
+- bab, bagian, perubahan, amandemen
+- hak asasi, kewajiban, negara, pemerintahan
 
-3. **Response Format**:
-   ```json
-   {
-     "question": "Apa bunyi pasal 28 UUD 1945?",
-     "answer": "**Pasal 28 UUD 1945:** Kemerdekaan berserikat dan berkumpul...",
-     "system": "native|langchain_enhanced",
-     "accuracy": 96.8,
-     "responseTime": 4200,
-     "sources": ["UUD1945.pdf", "UUD1945-BPHN.pdf"],
-     "geminiModel": "gemini-2.5-flash"
-   }
-   ```
+### **🛠️ 2. Manual Selection**
 
-### Fitur Formatting Response
+```javascript
+// Frontend selection
+const ragSystem = {
+  native: "Multi-document processing yang optimal",
+  langchain_enhanced: "Context-aware dengan advanced retrieval",
+  auto: "Sistem otomatis berdasarkan analisis pertanyaan",
+};
+```
 
-Aplikasi dilengkapi dengan sistem formatting canggih untuk respons AI:
+### **📋 3. Response Format yang Komprehensif**
 
-#### **Markdown to HTML Conversion**
+```json
+{
+  "question": "Apa bunyi pasal 28 UUD 1945?",
+  "answer": "**Pasal 28 UUD 1945:** Kemerdekaan berserikat dan berkumpul, mengeluarkan pikiran dengan lisan dan tulisan dan sebagainya ditetapkan dengan undang-undang.",
+  "system": "native",
+  "accuracy": 96.8,
+  "responseTime": 4200,
+  "sources": ["UUD1945.pdf", "UUD1945-BPHN.pdf"],
+  "geminiModel": "gemini-2.5-flash",
+  "chunksUsed": 3,
+  "isError": false,
+  "errorMessage": null
+}
+```
 
-- **Bold text** (`**text**`) → <span style="color: orange; font-weight: 600;">Orange highlighted text</span>
-- Headers dengan numbering otomatis
-- Bullet points dengan styling khusus
-- Paragraph spacing yang optimal
+### **📚 4. Document Processing Pipeline**
+
+#### **Dokumen Konstitusi (5 PDF Files)**
+
+- `UUD1945.pdf` - Undang-Undang Dasar 1945 (Versi Asli)
+- `UUD1945-BPHN.pdf` - UUD 1945 versi BPHN
+- `UUD1945-MKRI.pdf` - UUD 1945 versi MKRI
+- `UUD1945-MPR.pdf` - UUD 1945 versi MPR
+- `UUD1954-MK.pdf` - UUD Sementara 1954 versi MK
+
+#### **Vector Database (ChromaDB)**
+
+- **Total Chunks**: 691 optimized chunks
+- **Chunk Size**: 5000 characters dengan overlap 200
+- **Embedding Model**: Sentence Transformers
+- **Index Type**: HNSW untuk fast similarity search
+
+## 🎨 **Advanced Response Formatting System**
+
+### **🔄 Markdown to HTML Conversion Pipeline**
 
 #### **Component Architecture**
 
+```typescript
+// FormattedResponse.tsx - Main formatting component
+interface FormattedResponseProps {
+  content: string;
+  className?: string;
+}
+
+// markdownFormatter.ts - Utility functions
+export const createFormattedParagraphs = (text: string): string => {
+  // Bold text conversion: **text** → Orange highlighted
+  // Headers with numbering: **1. Header:** → Styled headers
+  // Bullet points: * Item → Custom styled lists
+  // Paragraph optimization dengan proper spacing
+};
 ```
-frontend/src/
-├── components/
-│   └── FormattedResponse.tsx     # Main formatting component
-├── lib/
-│   └── markdownFormatter.ts      # Utility functions
-└── app/
-    └── globals.css               # Custom CSS styling
-```
+
+#### **Styling Features**
+
+- **🟠 Bold Text**: `**text**` → <span style="color: #f97316; font-weight: 600;">Orange highlighted text</span>
+- **📋 Headers**: Automatic numbering dengan orange accent borders
+- **• Lists**: Custom bullet points dengan orange color scheme
+- **📄 Typography**: Optimized spacing untuk readability
 
 #### **Usage Example**
 
 ```tsx
-<FormattedResponse content={message.answer} className="custom-styling" />
+import FormattedResponse from "@/components/FormattedResponse";
+
+// Dalam chat component
+<FormattedResponse content={message.answer} className="ai-response-styling" />;
 ```
 
-### Troubleshooting
+#### **CSS Styling (globals.css)**
 
-#### Backend Issues
+```css
+.formatted-response .highlight {
+  color: #f97316;
+  font-weight: 600;
+  background: rgba(249, 115, 22, 0.1);
+  padding: 2px 4px;
+  border-radius: 4px;
+}
 
-1. **MongoDB Connection Error**:
+.formatted-response .response-header {
+  color: #f97316;
+  font-weight: 700;
+  border-left: 3px solid #f97316;
+  padding-left: 12px;
+}
+```
 
-   - Pastikan connection string benar
-   - Check whitelist IP di MongoDB Atlas
+## 🐛 **Troubleshooting Guide**
 
-2. **Python RAG Error**:
-   - Pastikan Python dependencies terinstall
-   - Check file path ke script Python
+### **🔧 Backend Issues**
 
-#### Frontend Issues
+#### **1. MongoDB Connection Error**
 
-1. **API Connection Error**:
+```bash
+Error: MongoNetworkError: failed to connect to server
+```
 
-   - Pastikan backend berjalan di port 5000
-   - Check CORS configuration
+**Solutions:**
 
-2. **Authentication Issues**:
-   - Clear localStorage: `localStorage.clear()`
-   - Re-login dengan kredensial yang valid
+- ✅ Pastikan connection string MongoDB Atlas benar
+- ✅ Check whitelist IP address di MongoDB Atlas dashboard
+- ✅ Verify username/password credentials
+- ✅ Ensure network connectivity
 
-### Development Notes
+#### **2. Python RAG Error**
 
-- Backend menggunakan simulasi RAG untuk testing
-- Untuk production, ganti simulasi dengan koneksi real ke Gemini API
-- Database schema otomatis dibuat saat user pertama register
-- Frontend menggunakan TypeScript untuk type safety
-- **New Features**:
-  - Advanced markdown formatting system untuk AI responses
-  - Orange branding theme konsisten di seluruh aplikasi
-  - Optimized RAG performance dengan warm-up mechanisms
-  - Enhanced user experience dengan auto-chat creation
+```bash
+ModuleNotFoundError: No module named 'langchain'
+```
 
-### Security
+**Solutions:**
 
-- JWT tokens untuk authentication
-- Password hashing dengan bcrypt
-- CORS protection
-- Input validation dan sanitization
-- Protected API routes dengan middleware
+```bash
+cd "backend/gemini API"
+pip install -r requirements.txt
 
-### Performance
+# Jika masih error, coba virtual environment
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+venv\Scripts\activate     # Windows
+pip install -r requirements.txt
+```
 
-- Database queries dioptimasi dengan indexing
-- Frontend menggunakan React optimizations
-- API responses di-cache where appropriate
-- Image optimization dengan Next.js
-- **RAG System Optimizations**:
-  - Native RAG: 96.8% accuracy, ~4-8s response time
-  - LangChain Enhanced: 89.2% accuracy, ~15-30s response time
-  - ChromaDB vector database dengan 691 optimized chunks
-  - Constitutional keyword detection untuk auto-routing
-  - Warm-up scripts untuk mengurangi cold start latency
+#### **3. Gemini API Error**
 
-Selamat menggunakan CoPed - Constitutional Pedia Indonesia! 🇮🇩
+```bash
+Error: Invalid API key or quota exceeded
+```
+
+**Solutions:**
+
+- ✅ Verify GEMINI_API_KEY di file .env
+- ✅ Check API quota di Google AI Studio
+- ✅ Ensure API key memiliki permission yang cukup
+
+#### **4. Port Already in Use**
+
+```bash
+Error: listen EADDRINUSE: address already in use :::5000
+```
+
+**Solutions:**
+
+```bash
+# Check apa yang menggunakan port 5000
+netstat -ano | findstr :5000
+
+# Kill process yang menggunakan port
+taskkill /PID <PID_NUMBER> /F
+
+# Atau gunakan port lain di .env
+PORT=5001
+```
+
+### **🎨 Frontend Issues**
+
+#### **1. API Connection Error**
+
+```javascript
+Error: Network Error - Unable to connect to backend
+```
+
+**Solutions:**
+
+- ✅ Pastikan backend berjalan di `http://localhost:5000`
+- ✅ Check CORS configuration di backend
+- ✅ Verify NEXT_PUBLIC_API_URL di .env.local
+- ✅ Clear browser cache dan cookies
+
+#### **2. Authentication Issues**
+
+```javascript
+Error: Unauthorized - Token expired or invalid
+```
+
+**Solutions:**
+
+```javascript
+// Clear localStorage dan login ulang
+localStorage.clear();
+sessionStorage.clear();
+
+// Atau via browser console
+localStorage.removeItem("token");
+localStorage.removeItem("user");
+```
+
+#### **3. Build/Development Errors**
+
+```bash
+Error: Module not found or TypeScript errors
+```
+
+**Solutions:**
+
+```bash
+# Clear Next.js cache
+rm -rf .next node_modules
+npm install
+npm run dev
+
+# Check TypeScript errors
+npm run build
+```
+
+#### **4. Spline/3D Graphics Loading Issues**
+
+```javascript
+Error: Failed to load Spline scene
+```
+
+**Solutions:**
+
+- ✅ Check internet connectivity
+- ✅ Verify Spline CDN accessibility
+- ✅ Try clearing browser cache
+- ✅ Disable ad blockers temporarily
+
+### **🚀 Performance Optimization**
+
+#### **1. Slow RAG Response Times**
+
+```javascript
+// LangChain timeout: >30s response time
+```
+
+**Solutions:**
+
+```bash
+# Use optimized startup script
+cd backend
+python start_optimized.py
+
+# Or manual warm-up
+cd "gemini API"
+python warmup_langchain.py
+```
+
+#### **2. Memory Usage Issues**
+
+```bash
+# High memory consumption
+```
+
+**Solutions:**
+
+- ✅ Close unused browser tabs
+- ✅ Restart Node.js backend periodically
+- ✅ Monitor Python process memory
+- ✅ Use production build untuk frontend
+
+### **🔍 Debug Mode**
+
+#### **Enable Detailed Logging**
+
+```javascript
+// Backend: Set NODE_ENV=development di .env
+NODE_ENV = development;
+DEBUG = true;
+
+// Frontend: Enable console logging
+console.log("Debug mode active");
+```
+
+#### **Check System Status**
+
+```bash
+# Backend health check
+curl http://localhost:5000/api/health
+
+# Check database connection
+curl http://localhost:5000/api/status
+
+# RAG system status
+python "backend/gemini API/test_langchain_accuracy.py"
+```
+
+## 👨‍💻 **Development Guide**
+
+### **🛠️ Development Setup**
+
+#### **Development Environment**
+
+```bash
+# Backend development dengan hot reload
+cd backend
+npm run dev  # menggunakan nodemon
+
+# Frontend development
+cd frontend
+npm run dev  # Next.js hot reload
+
+# Python RAG development
+cd "backend/gemini API"
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+#### **Code Structure Best Practices**
+
+```typescript
+// Frontend: TypeScript untuk type safety
+interface ChatMessage {
+  id: string;
+  question: string;
+  answer?: string;
+  ragSystem: "native" | "langchain_enhanced";
+  accuracy?: number;
+  responseTime?: number;
+}
+
+// Backend: Express middleware pattern
+const authMiddleware = (req, res, next) => {
+  // JWT validation logic
+};
+```
+
+### **🔄 Production Deployment**
+
+#### **Environment Configuration**
+
+```env
+# Production .env
+NODE_ENV=production
+MONGODB_URI=mongodb+srv://prod-cluster...
+ALLOWED_ORIGINS=https://yourproductiondomain.com
+GEMINI_API_KEY=your_production_api_key
+```
+
+#### **Build Process**
+
+```bash
+# Frontend production build
+cd frontend
+npm run build
+npm run start
+
+# Backend production
+cd backend
+npm install --production
+NODE_ENV=production node app.js
+```
+
+### **🔧 Latest Features Implementation**
+
+#### **v2.0 Updates:**
+
+- ✅ **Enhanced RAG Performance**: Native 96.8%, LangChain Enhanced 89.2%
+- ✅ **Advanced Markdown Formatting**: Orange-themed response styling
+- ✅ **Auto-Chat Creation**: Dynamic room creation dengan intelligent titling
+- ✅ **Typewriter Effects**: Smooth landing page animations
+- ✅ **Optimized Startup**: Warm-up mechanisms untuk LangChain
+- ✅ **Extended Timeout Handling**: 120s untuk query kompleks
+- ✅ **Vector Database Optimization**: 691 chunks dengan ChromaDB
+
+#### **Recent Code Improvements:**
+
+```python
+# Enhanced constitutional search dengan pattern matching
+def enhanced_constitutional_search(query, top_k=10):
+    constitutional_patterns = [
+        r'\b(?:pasal|ayat|bab|bagian)\s+\d+',
+        r'\b(?:UUD|undang[_\s-]undang)\b',
+        r'\b(?:konstitusi|amandemen|perubahan)\b'
+    ]
+    # Implementation details...
+```
+
+### **🔒 Security Implementation**
+
+#### **Authentication & Authorization**
+
+```javascript
+// JWT-based security
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
+
+// Password hashing
+const hashedPassword = await bcrypt.hash(password, 12);
+
+// Token generation
+const token = jwt.sign(
+  { userId: user._id, username: user.username },
+  process.env.JWT_SECRET,
+  { expiresIn: process.env.JWT_EXPIRE }
+);
+```
+
+#### **API Security**
+
+```javascript
+// CORS protection
+app.use(
+  cors({
+    origin: process.env.ALLOWED_ORIGINS?.split(","),
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  })
+);
+
+// Input validation & sanitization
+app.use(express.json({ limit: "10mb" }));
+```
+
+### **📊 Performance Metrics**
+
+#### **RAG System Performance**
+
+```
+🚀 Native RAG:
+├── Accuracy: 96.8%
+├── Response Time: 4-8s
+├── Model: Gemini 2.5 Flash
+└── Use Case: Constitutional law queries
+
+⚡ LangChain Enhanced RAG:
+├── Accuracy: 89.2%
+├── Response Time: 15-30s
+├── Model: Gemini 1.5 Flash + LangChain
+└── Use Case: Complex contextual analysis
+```
+
+#### **Database Optimization**
+
+```javascript
+// MongoDB indexing untuk performance
+db.chatrooms.createIndex({ userId: 1, lastActivity: -1 });
+db.messages.createIndex({ roomId: 1, timestamp: 1 });
+
+// ChromaDB vector database
+// - 691 optimized chunks
+// - HNSW indexing untuk fast similarity search
+// - Sentence transformer embeddings
+```
+
+#### **Frontend Performance**
+
+```typescript
+// React optimizations
+import { useCallback, useMemo } from "react";
+
+// Image optimization
+import Image from "next/image";
+
+// CSS optimization dengan Tailwind CSS
+// - JIT compilation
+// - Unused CSS purging
+// - Optimized bundle size
+```
+
+### **🔐 Security**
+
+- **🔑 JWT Authentication**: Secure token-based authentication system
+- **🔒 Password Security**: bcryptjs hashing dengan salt rounds
+- **🛡️ CORS Protection**: Configured untuk development dan production
+- **✅ Input Validation**: Comprehensive sanitization untuk semua input
+- **🚪 Protected Routes**: Middleware-based route protection
+- **🔄 Session Management**: Secure token refresh mechanisms
+- **🔐 Environment Variables**: Secure credential management dengan `.env` files
+- **⚠️ Credential Safety**: Hardcoded API keys telah dihapus dari codebase
+
+#### **🔒 Security Best Practices**
+```bash
+# ✅ CORRECT: Use environment variables
+api_key = os.getenv('GEMINI_API_KEY')
+
+# ❌ WRONG: Hardcoded credentials (REMOVED from codebase)
+# api_key = 'hardcoded_key'  # NEVER DO THIS!
+```
+
+**📋 Security Checklist:**
+- ✅ All hardcoded API keys removed
+- ✅ `.env` files properly configured
+- ✅ `.gitignore` prevents credential commits
+- ✅ Security documentation provided
+- ✅ Environment variable validation implemented
+
+👀 **See [SECURITY.md](SECURITY.md) for complete security guidelines**
+
+### **⚡ Performance**
+
+- **🗄️ Database**: MongoDB indexing untuk query optimization
+- **⚛️ Frontend**: React optimizations dengan Next.js 15.4.6
+- **📦 Caching**: API response caching where appropriate
+- **🖼️ Images**: Next.js image optimization dengan lazy loading
+- **🎯 RAG System Optimizations**:
+  - **Native RAG**: 96.8% accuracy, ~4-8s response time
+  - **LangChain Enhanced**: 89.2% accuracy, ~15-30s response time
+  - **ChromaDB**: Vector database dengan 691 optimized chunks
+  - **Smart Routing**: Constitutional keyword detection untuk auto-routing
+  - **Warm-up Scripts**: Pre-initialization untuk mengurangi cold start latency
+- **🚀 Build Optimization**:
+  - TypeScript compilation optimization
+  - Tailwind CSS purging untuk minimal bundle size
+  - Code splitting dengan Next.js dynamic imports
 
 ---
 
-## Recent Updates (v2.0)
+## 🎉 **Selamat Menggunakan CoPed!**
 
-### ✨ New Features
+**CoPed - Constitutional Pedia Indonesia** 🇮🇩
 
-- **Enhanced AI Response Formatting**: Markdown **bold text** otomatis diformat dengan orange styling
-- **Improved RAG Systems**: Native RAG (96.8%) dan LangChain Enhanced (89.2%)
-- **Auto Chat Creation**: Chat rooms dibuat otomatis dengan judul dari pertanyaan
-- **Typewriter Effect**: Landing page dengan efek typewriter yang elegant
-- **Orange Branding**: Konsistensi warna Co-Ped AI di seluruh aplikasi
-
-### 🔧 Technical Improvements
-
-- Timeout handling untuk query kompleks (120s)
-- Warm-up mechanisms untuk optimasi performa
-- Advanced markdown to HTML conversion
-- Enhanced constitutional document processing
-- Vector database optimization dengan ChromaDB
-
-### 🎨 UI/UX Enhancements
-
-- Responsive formatting untuk AI responses
-- Improved chat interface dengan real-time indicators
-- Custom CSS styling untuk markdown elements
-- Better error handling dan loading states
+> _Platform Edukasi Digital UUD 1945 dengan AI-Powered RAG System_
 
 ---
 
-**Developed with ❤️ for Indonesian Constitutional Education**
+## 📈 **Recent Updates (v2.0)**
+
+### ✨ **New Features**
+
+- **🎨 Enhanced AI Response Formatting**: Markdown **bold text** otomatis diformat dengan orange styling
+- **🧠 Improved RAG Systems**: Native RAG (96.8%) dan LangChain Enhanced (89.2%)
+- **🤖 Auto Chat Creation**: Chat rooms dibuat otomatis dengan judul dari pertanyaan
+- **⌨️ Typewriter Effect**: Landing page dengan efek typewriter yang elegant
+- **🟠 Orange Branding**: Konsistensi warna Co-Ped AI di seluruh aplikasi
+- **📱 Responsive Design**: Optimized untuk semua device dan screen size
+
+### 🔧 **Technical Improvements**
+
+- **⏰ Timeout Handling**: Extended timeout (120s) untuk query kompleks
+- **🔥 Warm-up Mechanisms**: Pre-initialization LangChain untuk optimasi performa
+- **🔄 Advanced Markdown Conversion**: Real-time markdown to HTML processing
+- **📚 Enhanced Document Processing**: Multi-format constitutional document support
+- **🗃️ Vector Database Optimization**: ChromaDB dengan 691 optimized chunks
+- **🐍 Python Script Optimization**: Efficient startup dengan background warm-up
+
+### 🎨 **UI/UX Enhancements**
+
+- **📝 Responsive Formatting**: Smart AI response layout yang adaptive
+- **💬 Improved Chat Interface**: Real-time indicators dan smooth animations
+- **🎯 Custom CSS Styling**: Tailored markdown elements dengan orange theme
+- **⚠️ Better Error Handling**: User-friendly error messages dan recovery
+- **🔄 Loading States**: Skeleton loading dan progress indicators
+- **🎭 Interactive Elements**: Hover effects dan smooth transitions
+
+### 🚀 **Performance Boosters**
+
+- **⚡ Fast Initial Load**: Optimized bundle size dengan code splitting
+- **🔄 Efficient Re-renders**: React optimization patterns
+- **📊 Smart Caching**: Strategic caching untuk frequently used data
+- **🗃️ Database Indexing**: Optimized MongoDB queries
+- **🎯 RAG Route Optimization**: Intelligent system selection
+
+---
+
+## 🤝 **Contributing**
+
+Kami menyambut kontribusi dari developer untuk meningkatkan CoPed!
+
+### **🔧 Development Workflow**
+
+1. Fork repository ini
+2. Create feature branch: `git checkout -b feature/amazing-feature`
+3. Commit changes: `git commit -m 'Add amazing feature'`
+4. Push ke branch: `git push origin feature/amazing-feature`
+5. Open Pull Request
+
+### **📋 Contribution Guidelines**
+
+- Follow TypeScript best practices
+- Maintain consistent code formatting
+- Add comprehensive tests untuk new features
+- Update documentation sesuai changes
+- Ensure semua tests pass before PR
+
+---
+
+## 📞 **Support & Contact**
+
+- **🐛 Issues**: [GitHub Issues](https://github.com/Nabilmln/CoPed-Constitutional-Pedia-/issues)
+- **📧 Email**: support@coped.indonesia.com
+- **💬 Discussions**: [GitHub Discussions](https://github.com/Nabilmln/CoPed-Constitutional-Pedia-/discussions)
+
+---
+
+## 📝 **License**
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 **Acknowledgments**
+
+- **Google AI**: Gemini API untuk RAG processing
+- **MongoDB**: Database solution
+- **Vercel**: Hosting dan deployment
+- **Indonesian Government**: Constitutional documents access
+- **Open Source Community**: Amazing libraries dan frameworks
+
+---
+
+**🇮🇩 Developed with ❤️ for Indonesian Constitutional Education**
+
+> _"Membangun literasi hukum Indonesia melalui teknologi AI yang inovatif"_
+
+**Version**: 2.0.0  
+**Last Updated**: August 27, 2025  
+**Maintained by**: CoPed Development Team

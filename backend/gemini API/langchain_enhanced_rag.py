@@ -58,9 +58,14 @@ class LangChainEnhancedRAG:
     def setup_llm(self):
         """Setup Google Gemini LLM via LangChain"""
         try:
+            # Use environment variable for API key security
+            api_key = os.getenv('GEMINI_API_KEY')
+            if not api_key:
+                raise ValueError("GEMINI_API_KEY environment variable not set")
+            
             self.llm = GoogleGenerativeAI(
                 model="gemini-1.5-flash",
-                google_api_key="AIzaSyDPVaD6JBzYf6fTzmPeR3eUck0Mm62LvHM",
+                google_api_key=api_key,
                 temperature=0.1  # Low temperature untuk faktual accuracy
             )
             print("✅ Gemini LLM initialized via LangChain")

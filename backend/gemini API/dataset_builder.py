@@ -27,7 +27,12 @@ class DatasetBuilder:
     def setup_ai(self):
         """Setup AI untuk processing"""
         try:
-            genai.configure(api_key='AIzaSyDPVaD6JBzYf6fTzmPeR3eUck0Mm62LvHM')
+            # Use environment variable for API key security
+            api_key = os.getenv('GEMINI_API_KEY')
+            if not api_key:
+                raise ValueError("GEMINI_API_KEY environment variable not set")
+            
+            genai.configure(api_key=api_key)
             self.model = genai.GenerativeModel('gemini-2.5-flash')
             print("✅ AI model initialized for dataset processing")
         except Exception as e:

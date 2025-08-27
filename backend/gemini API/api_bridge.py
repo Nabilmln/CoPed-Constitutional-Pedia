@@ -33,7 +33,11 @@ langchain_rag_instance = None
 def setup_gemini_fallback():
     """Setup basic Gemini API for fallback responses"""
     try:
-        genai.configure(api_key='AIzaSyDPVaD6JBzYf6fTzmPeR3eUck0Mm62LvHM')
+        # Use environment variable for API key security
+        api_key = os.getenv('GEMINI_API_KEY')
+        if not api_key:
+            raise ValueError("GEMINI_API_KEY environment variable not set")
+        genai.configure(api_key=api_key)
         return genai.GenerativeModel('gemini-1.5-flash')
     except Exception as e:
         print(f"Error setting up Gemini fallback: {e}", file=sys.stderr)
