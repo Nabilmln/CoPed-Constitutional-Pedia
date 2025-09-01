@@ -125,13 +125,14 @@ CoPed/
 4. **⚙️ Setup environment variables:**
 
    **🔒 IMPORTANT**: Copy `.env.example` to `.env` dan isi dengan credentials actual Anda:
-   
+
    ```bash
    # Copy template file
    cp backend/.env.example backend/.env
    ```
 
    Edit file `.env` dengan credentials yang benar:
+
    ```env
    # 🗄️ Database Configuration (Get from MongoDB Atlas)
    MONGODB_URI=mongodb+srv://your_username:your_password@your_cluster.mongodb.net/CoPed?retryWrites=true&w=majority
@@ -152,6 +153,9 @@ CoPed/
    ```
 
    **⚠️ Security Note**: File `.env` sudah ada di `.gitignore` dan tidak akan ter-commit ke repository.
+
+   ```
+
    ```
 
 5. **🚀 Jalankan backend:**
@@ -909,6 +913,7 @@ import Image from "next/image";
 - **⚠️ Credential Safety**: Hardcoded API keys telah dihapus dari codebase
 
 #### **🔒 Security Best Practices**
+
 ```bash
 # ✅ CORRECT: Use environment variables
 api_key = os.getenv('GEMINI_API_KEY')
@@ -918,6 +923,7 @@ api_key = os.getenv('GEMINI_API_KEY')
 ```
 
 **📋 Security Checklist:**
+
 - ✅ All hardcoded API keys removed
 - ✅ `.env` files properly configured
 - ✅ `.gitignore` prevents credential commits

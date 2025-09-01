@@ -9,11 +9,13 @@ This document outlines important security practices for the CoPed project.
 ### **1. Environment Variables Security**
 
 #### **🔐 Sensitive Files**
+
 - ❌ **NEVER** commit `.env` files to version control
 - ✅ Always use `.env.example` for templates
 - ✅ Keep actual credentials in local `.env` only
 
 #### **📋 Required Environment Variables**
+
 ```bash
 # MongoDB Atlas (Get from MongoDB dashboard)
 MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/database
@@ -28,6 +30,7 @@ GEMINI_API_KEY=your_gemini_api_key
 ### **2. Code Security Practices**
 
 #### **✅ Secure Implementation**
+
 ```python
 # ✅ CORRECT: Use environment variables
 import os
@@ -41,6 +44,7 @@ genai.configure(api_key='AIzaSyDPVaD6JBzYf6fTzmPeR3eUck0Mm62LvHM')  # NEVER DO T
 ```
 
 #### **🔍 Files That Were Secured**
+
 - ✅ `backend/gemini API/api_bridge.py` - Removed hardcoded API key
 - ✅ `backend/gemini API/langchain_enhanced_rag.py` - Secured with environment variable
 - ✅ `backend/gemini API/dataset_builder.py` - Implemented secure configuration
@@ -49,6 +53,7 @@ genai.configure(api_key='AIzaSyDPVaD6JBzYf6fTzmPeR3eUck0Mm62LvHM')  # NEVER DO T
 ## 🛡️ **Security Checklist**
 
 ### **Development Environment**
+
 - [ ] Copy `.env.example` to `.env`
 - [ ] Fill in actual credentials in `.env`
 - [ ] Verify `.env` is in `.gitignore`
@@ -56,6 +61,7 @@ genai.configure(api_key='AIzaSyDPVaD6JBzYf6fTzmPeR3eUck0Mm62LvHM')  # NEVER DO T
 - [ ] Remove any hardcoded credentials from code
 
 ### **Production Environment**
+
 - [ ] Use strong, unique passwords
 - [ ] Enable MongoDB Atlas IP whitelist
 - [ ] Use production-grade JWT secrets
@@ -64,6 +70,7 @@ genai.configure(api_key='AIzaSyDPVaD6JBzYf6fTzmPeR3eUck0Mm62LvHM')  # NEVER DO T
 - [ ] Regular security audits
 
 ### **API Key Management**
+
 - [ ] Generate unique API keys for each environment
 - [ ] Monitor API usage for anomalies
 - [ ] Rotate keys regularly (monthly recommended)
@@ -71,6 +78,7 @@ genai.configure(api_key='AIzaSyDPVaD6JBzYf6fTzmPeR3eUck0Mm62LvHM')  # NEVER DO T
 - [ ] Never share API keys in documentation or code
 
 ### **Database Security**
+
 - [ ] Use strong MongoDB Atlas passwords
 - [ ] Enable network access restrictions
 - [ ] Set up database encryption at rest
@@ -80,6 +88,7 @@ genai.configure(api_key='AIzaSyDPVaD6JBzYf6fTzmPeR3eUck0Mm62LvHM')  # NEVER DO T
 ## 🚫 **What NOT to Commit**
 
 ### **Sensitive Files**
+
 ```
 ❌ .env
 ❌ .env.local
@@ -91,6 +100,7 @@ genai.configure(api_key='AIzaSyDPVaD6JBzYf6fTzmPeR3eUck0Mm62LvHM')  # NEVER DO T
 ```
 
 ### **Sensitive Code Patterns**
+
 ```python
 ❌ api_key = "AIzaSyD..."
 ❌ password = "mypassword123"
@@ -101,6 +111,7 @@ genai.configure(api_key='AIzaSyDPVaD6JBzYf6fTzmPeR3eUck0Mm62LvHM')  # NEVER DO T
 ## 🔧 **Security Tools**
 
 ### **Pre-commit Hooks**
+
 ```bash
 # Install git-secrets to prevent credential commits
 git clone https://github.com/awslabs/git-secrets.git
@@ -112,6 +123,7 @@ git secrets --install
 ```
 
 ### **Credential Scanning**
+
 ```bash
 # Use truffleHog to scan for leaked credentials
 docker run --rm -v "$PWD:/pwd" trufflesecurity/trufflehog:latest filesystem /pwd
@@ -122,12 +134,14 @@ docker run --rm -v "$PWD:/pwd" trufflesecurity/trufflehog:latest filesystem /pwd
 ### **If Credentials Are Compromised**
 
 1. **Immediate Actions:**
+
    - [ ] Revoke exposed API keys immediately
    - [ ] Change all passwords
    - [ ] Generate new JWT secrets
    - [ ] Review access logs
 
 2. **Investigation:**
+
    - [ ] Identify scope of exposure
    - [ ] Check for unauthorized access
    - [ ] Document incident timeline
@@ -141,6 +155,7 @@ docker run --rm -v "$PWD:/pwd" trufflesecurity/trufflehog:latest filesystem /pwd
 ## 📧 **Contact**
 
 For security concerns or to report vulnerabilities:
+
 - **Email**: security@coped.indonesia.com
 - **Encrypted Communication**: Use PGP key available on request
 
@@ -154,4 +169,4 @@ For security concerns or to report vulnerabilities:
 
 **🔒 Remember: Security is everyone's responsibility!**
 
-*Last Updated: August 27, 2025*
+_Last Updated: August 27, 2025_

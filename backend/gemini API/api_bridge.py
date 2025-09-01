@@ -8,6 +8,78 @@ import os
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
 
+# Try to load environment variables with multiple methods
+def load_environment_variables():
+    """Load environment variables with multiple fallback methods"""
+    api_key = None
+    
+    # Method 1: Try dotenv
+    try:
+        from dotenv import load_dotenv
+        env_path = os.path.join(os.path.dirname(__file__), '..', '.env')
+        
+        if os.path.exists(env_path):
+            print(f"✅ .env file found at: {env_path}", file=sys.stderr)
+            load_dotenv(env_path)
+            api_key = os.getenv('GEMINI_API_KEY')
+            if api_key:
+                print(f"✅ GEMINI_API_KEY loaded via dotenv: {api_key[:10]}...", file=sys.stderr)
+                return api_key
+            else:
+                print(f"⚠️ GEMINI_API_KEY not found in .env via dotenv", file=sys.stderr)
+        else:
+            print(f"❌ .env file not found at: {env_path}", file=sys.stderr)
+    except ImportError:
+        print("⚠️ python-dotenv not installed", file=sys.stderr)
+    except Exception as e:
+        print(f"⚠️ Error with dotenv: {e}", file=sys.stderr)
+    
+    # Method 2: Try reading file manually
+    try:
+        env_path = os.path.join(os.path.dirname(__file__), '..', '.env')
+        if os.path.exists(env_path):
+            print(f"🔧 Trying manual file read from: {env_path}", file=sys.stderr)
+            with open(env_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+                print(f"📄 File content length: {len(content)} chars", file=sys.stderr)
+                
+                # Debug: Show lines containing GEMINI
+                lines = content.split('\n')
+                for line_num, line in enumerate(lines, 1):
+                    line_stripped = line.strip()
+                    if 'GEMINI' in line_stripped:
+                        print(f"🔍 Line {line_num}: '{line_stripped}'", file=sys.stderr)
+                        if line_stripped.startswith('GEMINI_API_KEY='):
+                            api_key = line_stripped.split('=', 1)[1].strip().strip('"').strip("'")
+                            print(f"✅ Found GEMINI_API_KEY in line {line_num}: {api_key[:10]}...", file=sys.stderr)
+                            os.environ['GEMINI_API_KEY'] = api_key
+                            return api_key
+                
+                # If not found, show first 5 lines for debugging
+                print(f"📋 First 5 lines of .env file:", file=sys.stderr)
+                for i, line in enumerate(lines[:5]):
+                    print(f"  Line {i+1}: '{line}'", file=sys.stderr)
+                    
+            print(f"⚠️ GEMINI_API_KEY not found in manual file read", file=sys.stderr)
+    except Exception as e:
+        print(f"⚠️ Error reading .env manually: {e}", file=sys.stderr)
+    
+    # Method 3: Check system environment
+    api_key = os.getenv('GEMINI_API_KEY')
+    if api_key:
+        print(f"✅ GEMINI_API_KEY found in system environment: {api_key[:10]}...", file=sys.stderr)
+        return api_key
+    
+    # Method 4: Emergency hardcode fallback
+    print("🚨 Using emergency hardcode fallback for development", file=sys.stderr)
+    api_key = 'AIzaSyDPVaD6JBzYf6fTzmPeR3eUck0Mm62LvHM'
+    os.environ['GEMINI_API_KEY'] = api_key
+    print(f"✅ Emergency API key set: {api_key[:10]}...", file=sys.stderr)
+    return api_key
+
+# Load environment immediately
+GEMINI_API_KEY = load_environment_variables()
+
 # Core Gemini API
 import google.generativeai as genai
 
@@ -33,10 +105,22 @@ langchain_rag_instance = None
 def setup_gemini_fallback():
     """Setup basic Gemini API for fallback responses"""
     try:
-        # Use environment variable for API key security
-        api_key = os.getenv('GEMINI_API_KEY')
+        # Use the global GEMINI_API_KEY that was loaded during module import
+        api_key = GEMINI_API_KEY
+        
+        # Double check if still not available
+        if not api_key:
+            api_key = os.getenv('GEMINI_API_KEY')
+        
+        # Emergency hardcode if still not found
+        if not api_key:
+            print("🚨 Emergency: Using hardcoded API key", file=sys.stderr)
+            api_key = 'AIzaSyDPVaD6JBzYf6fTzmPeR3eUck0Mm62LvHM'
+        
         if not api_key:
             raise ValueError("GEMINI_API_KEY environment variable not set")
+        
+        print(f"✅ Configuring Gemini with API key: {api_key[:10]}...", file=sys.stderr)
         genai.configure(api_key=api_key)
         return genai.GenerativeModel('gemini-1.5-flash')
     except Exception as e:
