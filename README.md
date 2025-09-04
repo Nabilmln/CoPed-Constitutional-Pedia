@@ -18,11 +18,11 @@ Platform edukasi digital untuk memahami UUD 1945 dengan chatbot berbasis Dual RA
 
 ```mermaid
 flowchart TD
-    A[PDF / TXT Documents] --> B[Text Extraction & Validation]
-    B --> C[Intelligent Chunking (Bab/Pasal/Ayat)]
+    A[PDF / TXT Documents] --> B[Text Extraction and Validation]
+    B --> C[Intelligent Chunking: Bab/Pasal/Ayat]
     C --> D[JSON Dataset Cache + Hash MD5]
-    D --> E[Combined Dataset (Native RAG)]
-    C --> F[Embeddings (SentenceTransformers)]
+    D --> E[Combined Dataset - Native RAG]
+    C --> F[Embeddings with SentenceTransformers]
     F --> G[ChromaDB - Persistent Vector Store]
 ```
 
@@ -41,8 +41,8 @@ flowchart TD
     E --> DR
 
     DR --> GAI[Google Gemini Processing]
-    GAI --> PP[Post-processing (format, sumber, metadata)]
-    PP --> R[Final Response to User + Save to DB]
+    GAI --> PP[Post-processing: format + sumber + metadata]
+    PP --> R[Final Response to User and Save to DB]
 ```
 
 ---
