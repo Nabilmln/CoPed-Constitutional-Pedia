@@ -26,7 +26,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "CoPed - Constitutional Pedia",
+  title: "CoPed",
   description: "Platform edukasi digital untuk mempelajari UUD 1945 dengan AI",
 };
 

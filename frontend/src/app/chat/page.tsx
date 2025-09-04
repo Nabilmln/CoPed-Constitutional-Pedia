@@ -507,6 +507,11 @@ export default function ChatPage() {
                                   : "0s"}
                               </span>
                             </div>
+
+                            <div>
+                              
+                            </div>
+
                           </div>
 
                           {/* Error message if any */}
