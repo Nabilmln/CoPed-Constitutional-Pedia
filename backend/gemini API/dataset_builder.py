@@ -40,29 +40,34 @@ class DatasetBuilder:
             self.model = None
     
     def discover_pdf_files(self, data_dir="data"):
-        """Auto-discover semua PDF files"""
+        """Auto-discover PDF files - ONLY UUD1945.pdf untuk akurasi fokus"""
         if not os.path.exists(data_dir):
             print(f"❌ Directory {data_dir} not found")
             return []
         
+        # KONFIGURASI: Hanya gunakan UUD1945.pdf sebagai sumber utama
+        target_file = "UUD1945.pdf"
+        target_path = os.path.join(data_dir, target_file)
+        
         pdf_files = []
-        for file in os.listdir(data_dir):
-            if file.endswith('.pdf'):
-                file_path = os.path.join(data_dir, file)
-                file_info = {
-                    "filename": file,
-                    "path": file_path,
-                    "size": os.path.getsize(file_path),
-                    "modified": os.path.getmtime(file_path)
-                }
-                pdf_files.append(file_info)
         
-        # Sort by size (largest first) untuk prioritas
-        pdf_files.sort(key=lambda x: x['size'], reverse=True)
-        
-        print(f"📁 Discovered {len(pdf_files)} PDF files:")
-        for file_info in pdf_files:
+        if os.path.exists(target_path):
+            file_info = {
+                "filename": target_file,
+                "path": target_path,
+                "size": os.path.getsize(target_path),
+                "modified": os.path.getmtime(target_path)
+            }
+            pdf_files.append(file_info)
+            print(f"📁 Using ONLY target file: {target_file}")
             print(f"  📄 {file_info['filename']} ({file_info['size']:,} bytes)")
+            print(f"  🎯 Single source strategy for maximum accuracy")
+        else:
+            print(f"❌ Target file {target_file} not found in {data_dir}")
+            print("📋 Available files:")
+            for file in os.listdir(data_dir):
+                if file.endswith('.pdf'):
+                    print(f"  - {file}")
         
         return pdf_files
     

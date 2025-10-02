@@ -1,8 +1,58 @@
 const { v4: uuidv4 } = require("uuid");
 const geminiService = require("../services/geminiServices");
+const legalContextValidator = require("../utils/legalValidator");
 
 // In-memory storage for chat rooms (untuk testing, production bisa gunakan database)
 let chatRooms = [];
+
+// Helper function to generate smart titles based on question content
+const generateSmartTitle = (question) => {
+  // Constitutional keywords mapping
+  const constitutionalKeywords = {
+    "pasal 1": "Pasal 1 - Bentuk Negara",
+    "pasal 2": "Pasal 2 - MPR dan Kedaulatan",
+    "pasal 3": "Pasal 3 - Kekuasaan MPR",
+    "kedaulatan rakyat": "Kedaulatan Rakyat",
+    kedaulatan: "Kedaulatan dalam UUD 1945",
+    "hak asasi manusia": "HAM dalam UUD 1945",
+    "hak asasi": "Hak Asasi Manusia",
+    presiden: "Sistem Presidensial",
+    mpr: "MPR dan Lembaga Negara",
+    dpr: "DPR dan Legislatif",
+    "mahkamah konstitusi": "Mahkamah Konstitusi",
+    "mahkamah agung": "Mahkamah Agung",
+    "sistem pemerintahan": "Sistem Pemerintahan Indonesia",
+    "pembukaan uud": "Pembukaan UUD 1945",
+    pancasila: "Pancasila dalam UUD 1945",
+    "negara kesatuan": "Negara Kesatuan Republik Indonesia",
+    republik: "Bentuk Republik Indonesia",
+    demokrasi: "Demokrasi Indonesia",
+    pemilu: "Pemilihan Umum",
+    "otonomi daerah": "Otonomi Daerah",
+    amandemen: "Amandemen UUD 1945",
+  };
+
+  const questionLower = question.toLowerCase();
+
+  // Check for exact keyword matches
+  for (const [keyword, title] of Object.entries(constitutionalKeywords)) {
+    if (questionLower.includes(keyword)) {
+      return title;
+    }
+  }
+
+  // If no keywords found, use question itself with smart truncation
+  if (question.length > 50) {
+    // Try to cut at word boundary
+    const truncated = question.substring(0, 47);
+    const lastSpace = truncated.lastIndexOf(" ");
+    return lastSpace > 20
+      ? truncated.substring(0, lastSpace) + "..."
+      : truncated + "...";
+  }
+
+  return question;
+};
 
 // @desc    Create new chat room
 // @route   POST /api/chat/rooms
@@ -160,6 +210,71 @@ exports.processChatQuestion = async (req, res) => {
       });
     }
 
+    // Validate legal context before processing
+    const validationResult = legalContextValidator.isLegalContext(
+      question.trim()
+    );
+    console.log("Legal context validation:", validationResult);
+
+    if (!validationResult.isValid) {
+      const rejectionResponse =
+        legalContextValidator.generateRejectionResponse(validationResult);
+
+      // Still save to chat history if roomId provided (for learning/audit purposes)
+      if (roomId) {
+        const roomIndex = chatRooms.findIndex((room) => room.roomId === roomId);
+        if (roomIndex !== -1) {
+          const rejectionMessage = {
+            question: question.trim(),
+            answer: rejectionResponse.answer,
+            ragSystem: rejectionResponse.system,
+            accuracy: rejectionResponse.accuracy,
+            responseTime: rejectionResponse.responseTime,
+            sources: rejectionResponse.sources,
+            geminiModel: rejectionResponse.geminiModel,
+            isError: rejectionResponse.isError,
+            errorMessage: rejectionResponse.errorMessage,
+            createdAt: new Date(),
+            validationReason: rejectionResponse.validationReason,
+            contextScore: rejectionResponse.contextScore,
+          };
+
+          chatRooms[roomIndex].messages.push(rejectionMessage);
+          chatRooms[roomIndex].lastActivity = new Date();
+
+          // Update room title for non-legal questions
+          if (
+            chatRooms[roomIndex].messages.length === 1 &&
+            (chatRooms[roomIndex].title === "Chat Baru" ||
+              chatRooms[roomIndex].title.startsWith("Chat Room"))
+          ) {
+            chatRooms[roomIndex].title = "🏛️ Konsultasi di Luar Bidang Hukum";
+          }
+        }
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Pertanyaan berhasil diproses - konteks non-hukum",
+        data: {
+          question: question.trim(),
+          answer: rejectionResponse.answer,
+          system: rejectionResponse.system,
+          accuracy: rejectionResponse.accuracy,
+          responseTime: rejectionResponse.responseTime,
+          sources: rejectionResponse.sources,
+          geminiModel: rejectionResponse.geminiModel,
+          roomId: roomId || null,
+          isError: false,
+          errorMessage: rejectionResponse.errorMessage,
+          validationReason: rejectionResponse.validationReason,
+          contextScore: rejectionResponse.contextScore,
+          legalContextRequired: true,
+          isLegalContextRejection: true,
+        },
+      });
+    }
+
     const startTime = Date.now();
     let result;
 
@@ -214,6 +329,17 @@ exports.processChatQuestion = async (req, res) => {
 
         chatRooms[roomIndex].messages.push(newMessage);
         chatRooms[roomIndex].lastActivity = new Date();
+
+        // Auto-update room title if it's still default and this is the first message
+        if (
+          chatRooms[roomIndex].messages.length === 1 &&
+          (chatRooms[roomIndex].title === "Chat Baru" ||
+            chatRooms[roomIndex].title.startsWith("Chat Room"))
+        ) {
+          const smartTitle = generateSmartTitle(question.trim());
+          chatRooms[roomIndex].title = smartTitle;
+          console.log(`Room title auto-updated to: ${smartTitle}`);
+        }
 
         console.log("Message saved to room:", roomId);
       }

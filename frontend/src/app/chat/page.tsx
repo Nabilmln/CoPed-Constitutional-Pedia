@@ -130,10 +130,33 @@ export default function ChatPage() {
         )
       );
 
+      // Smart RAG selection based on question content
+      let ragSystemToUse: "native" | "langchain" | "auto" =
+        selectedModel === "native" ? "native" : "langchain";
+
+      // Override with auto-select for legal questions for better accuracy
+      const legalKeywords = [
+        "pasal",
+        "undang",
+        "konstitusi",
+        "hukum",
+        "peraturan",
+        "UUD",
+        "ayat",
+      ];
+      const isLegalQuestion = legalKeywords.some((keyword) =>
+        userMessage.toLowerCase().includes(keyword.toLowerCase())
+      );
+
+      // Use auto-select for better accuracy on legal questions
+      if (isLegalQuestion) {
+        ragSystemToUse = "auto";
+      }
+
       const response = await apiService.askQuestion(
         userMessage,
         roomId,
-        selectedModel === "native" ? "native" : "langchain"
+        ragSystemToUse
       );
 
       if (response.success) {
@@ -159,6 +182,12 @@ export default function ChatPage() {
                       : msg
                   ),
                   lastActivity: new Date(),
+                  // Update title for non-legal questions
+                  title:
+                    response.data.isLegalContextRejection &&
+                    room.messages.length <= 1
+                      ? "🏛️ Konsultasi di Luar Bidang Hukum"
+                      : room.title,
                 }
               : room
           )
@@ -488,6 +517,8 @@ export default function ChatPage() {
                                   : message.ragSystem === "langchain"
                                   ? "LangChain"
                                   : message.ragSystem || "Unknown"}
+                                {/* Show auto-selected indicator */}
+                                {(message as any).autoSelected ? " (Auto)" : ""}
                               </span>
                             </div>
 
@@ -508,17 +539,31 @@ export default function ChatPage() {
                               </span>
                             </div>
 
-                            <div>
-                              
-                            </div>
-
+                            <div></div>
                           </div>
 
                           {/* Error message if any */}
                           {message.isError && (
-                            <div className="mt-2 bg-red-900/30 border border-red-700 rounded-lg px-2 py-1">
-                              <span className="text-xs text-red-300">
-                                Error: {message.errorMessage}
+                            <div
+                              className={`mt-2 rounded-lg px-2 py-1 border ${
+                                message.errorMessage?.includes("konteks hukum")
+                                  ? "bg-orange-900/30 border-orange-700"
+                                  : "bg-red-900/30 border-red-700"
+                              }`}
+                            >
+                              <span
+                                className={`text-xs ${
+                                  message.errorMessage?.includes(
+                                    "konteks hukum"
+                                  )
+                                    ? "text-orange-300"
+                                    : "text-red-300"
+                                }`}
+                              >
+                                {message.errorMessage?.includes("konteks hukum")
+                                  ? "⚠️ Legal Context: "
+                                  : "Error: "}
+                                {message.errorMessage}
                               </span>
                             </div>
                           )}
@@ -555,9 +600,45 @@ export default function ChatPage() {
             </div>
           ) : (
             <div className="flex items-center justify-center h-full">
-              <p className="text-gray-400 poppins-regular text-sm">
-                Mulai chat dengan mengetik pertanyaan Anda di bawah
-              </p>
+              <div className="text-center max-w-2xl">
+                <p className="text-gray-400 poppins-regular text-sm mb-6">
+                  Mulai chat dengan mengetik pertanyaan Anda di bawah atau pilih
+                  contoh pertanyaan:
+                </p>
+
+                {/* Template Questions */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+                  {[
+                    "Apa isi dari pasal 1 ayat 1?",
+                    "Apa yang dimaksud dengan kedaulatan rakyat?",
+                    "Bagaimana sistem pemerintahan menurut UUD 1945?",
+                    "Apa saja hak asasi manusia yang dijamin dalam UUD 1945?",
+                  ].map((question, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentMessage(question)}
+                      className="bg-[#2A2A2A] hover:bg-[#3A3A3A] text-white p-3 rounded-lg transition-colors poppins-regular text-xs text-left border border-gray-600 hover:border-[#F60]"
+                    >
+                      {question}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="bg-blue-900/20 border border-blue-700/50 rounded-lg p-3">
+                  <p className="text-blue-300 poppins-regular text-xs mb-2">
+                    Fokus Hukum Konstitusi Indonesia
+                  </p>
+                  <p className="text-gray-400 poppins-regular text-xs">
+                    • Hanya menjawab pertanyaan tentang UUD 1945 dan hukum
+                    konstitusi
+                    <br />
+                    • Menggunakan UUD 1945 sebagai sumber tunggal untuk akurasi
+                    maksimal
+                    <br />• Pertanyaan di luar konteks hukum akan ditolak secara
+                    otomatis
+                  </p>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -574,7 +655,7 @@ export default function ChatPage() {
                   handleSendMessage();
                 }
               }}
-              placeholder="apa itu kewarganegaraan?"
+              placeholder="tanyakan sesuatu..."
               className="w-full bg-transparent text-white px-3 py-2 pr-10 rounded-lg poppins-regular placeholder-gray-400 border border-gray-600 focus:border-[#F60] outline-none text-xs"
             />
             <button

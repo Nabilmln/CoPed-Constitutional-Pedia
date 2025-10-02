@@ -50,6 +50,10 @@ interface ChatQuestionResponse {
     isError?: boolean;
     errorMessage?: string;
     autoSelected?: boolean;
+    legalContextRequired?: boolean;
+    isLegalContextRejection?: boolean;
+    validationReason?: string;
+    contextScore?: number;
   };
   message?: string;
 }

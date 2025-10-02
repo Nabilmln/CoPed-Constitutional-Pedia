@@ -63,11 +63,28 @@ class LangChainEnhancedRAG:
             if not api_key:
                 raise ValueError("GEMINI_API_KEY environment variable not set")
             
-            self.llm = GoogleGenerativeAI(
-                model="gemini-1.5-flash",
-                google_api_key=api_key,
-                temperature=0.1  # Low temperature untuk faktual accuracy
-            )
+            # Use available models from Gemini API
+            model_names = ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"]
+            
+            for model_name in model_names:
+                try:
+                    self.llm = GoogleGenerativeAI(
+                        model=model_name,
+                        google_api_key=api_key,
+                        temperature=0.1  # Low temperature untuk faktual accuracy
+                    )
+                    print(f"✅ Using model: {model_name}")
+                    break
+                except Exception as model_error:
+                    print(f"⚠️ Model {model_name} failed: {model_error}")
+                    continue
+            else:
+                # If all fail, use most stable model
+                self.llm = GoogleGenerativeAI(
+                    model="gemini-2.5-flash",
+                    google_api_key=api_key,
+                    temperature=0.1
+                )
             print("✅ Gemini LLM initialized via LangChain")
         except Exception as e:
             print(f"❌ Error setting up LLM: {e}")
@@ -125,37 +142,29 @@ JAWABAN BERDASARKAN ANALISIS MULTI-DOKUMEN UUD 1945:
         print("✅ Constitutional law prompt template optimized for multi-document UUD 1945 analysis")
     
     def load_and_process_documents(self, pdf_directory="data/"):
-        """Load dan process multiple PDFs dengan LangChain loaders - SAMA seperti native RAG"""
+        """Load dan process ONLY UUD1945.pdf - single source strategy"""
         print(f"\n📚 Loading and processing constitutional documents from {pdf_directory}")
-        print("🎯 Using SAME PDF files as native RAG system for consistency")
+        print("🎯 Using ONLY UUD1945.pdf as single authoritative source")
         
         documents = []
         processed_files = []
         
-        # IMPORTANT: Gunakan file PDF yang SAMA seperti native system
-        target_files = [
-            "UUD1945.pdf",
-            "UUD1945-BPHN.pdf", 
-            "UUD1945-MKRI.pdf",
-            "UUD1945-MPR.pdf",
-            "UUD1954-MK.pdf"
-        ]
+        # KONFIGURASI: Hanya gunakan UUD1945.pdf sebagai sumber tunggal
+        target_file = "UUD1945.pdf"
+        target_path = os.path.join(pdf_directory, target_file)
         
-        # Get all PDF files yang tersedia
-        available_files = [f for f in os.listdir(pdf_directory) if f.endswith('.pdf')]
-        
-        # Prioritas: gunakan target files jika ada, otherwise gunakan semua
-        files_to_process = []
-        for target_file in target_files:
-            if target_file in available_files:
-                files_to_process.append(target_file)
-        
-        # Jika tidak ada target files, gunakan semua available files
-        if not files_to_process:
-            files_to_process = available_files
-            print("⚠️ Target constitutional files not found, using all available PDFs")
+        # Check if UUD1945.pdf exists
+        if os.path.exists(target_path):
+            files_to_process = [target_file]
+            print(f"✅ Found target constitutional document: {target_file}")
+            print(f"📋 Single source strategy: focusing on authoritative UUD1945.pdf only")
         else:
-            print(f"✅ Found {len(files_to_process)} target constitutional documents")
+            print(f"❌ Target file {target_file} not found")
+            print("📋 Available files:")
+            available_files = [f for f in os.listdir(pdf_directory) if f.endswith('.pdf')]
+            for file in available_files:
+                print(f"  - {file}")
+            files_to_process = []
         
         for pdf_file in files_to_process:
             file_path = os.path.join(pdf_directory, pdf_file)
