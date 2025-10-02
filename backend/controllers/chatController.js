@@ -1,6 +1,6 @@
 const { v4: uuidv4 } = require("uuid");
 const geminiService = require("../services/geminiServices");
-const legalContextValidator = require("../utils/legalValidator");
+const legalContextValidator = require("../utils/legalContextValidator");
 
 // In-memory storage for chat rooms (untuk testing, production bisa gunakan database)
 let chatRooms = [];
