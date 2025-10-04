@@ -1,3 +1,7 @@
+/* ==========================================================================
+   IMPORTS & THEME CONFIGURATION
+   ========================================================================== */
+
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -43,10 +47,21 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/* ==========================================================================
+   CSS CUSTOM PROPERTIES (VARIABLES)
+   ========================================================================== */
+
 :root {
+  /* Base */
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
+
+  /* Brand Colors */
+  --brand-orange: #f60;
+  --brand-orange-hover: #e55500;
+
+  /* Components */
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
@@ -63,11 +78,15 @@
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
+
+  /* Charts */
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
+
+  /* Sidebar */
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -112,65 +131,64 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* ==========================================================================
+   BASE STYLES
+   ========================================================================== */
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+
   html {
     scroll-behavior: smooth;
   }
 }
 
-/* Custom font classes */
+/* ==========================================================================
+   TYPOGRAPHY UTILITIES
+   ========================================================================== */
+
+.font-michroma,
 .michroma-regular {
   font-family: var(--font-michroma), "Michroma", sans-serif;
   font-weight: 400;
   font-style: normal;
 }
 
+.font-poppins-base {
+  font-family: var(--font-poppins), "Poppins", sans-serif;
+  font-style: normal;
+}
+
+.font-poppins-regular,
 .poppins-regular {
   font-family: var(--font-poppins), "Poppins", sans-serif;
   font-weight: 400;
   font-style: normal;
 }
 
+.font-poppins-medium,
 .poppins-medium {
   font-family: var(--font-poppins), "Poppins", sans-serif;
   font-weight: 500;
   font-style: normal;
 }
 
+.font-poppins-semibold,
 .poppins-semibold {
   font-family: var(--font-poppins), "Poppins", sans-serif;
   font-weight: 600;
   font-style: normal;
 }
 
-/* Home Page Styles */
-.home-page {
-  background: transparent; /* Ubah dari #1a1a1a ke transparan untuk Threads background */
-  color: #fff;
-  animation: fadeIn 0.8s ease-out;
-  position: relative;
-  height: 100vh;
-}
-
-/* Override body background untuk halaman home */
-body:has(.home-page) {
-  background: #0a0a0a; /* Background fallback yang lebih gelap */
-}
-
-/* Hero Section Height */
-main {
-  /* height: 100vh; */
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 32px 64px;
-}
+/* ==========================================================================
+   ANIMATIONS
+   ========================================================================== */
 
 @keyframes fadeIn {
   from {
@@ -181,37 +199,6 @@ main {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-/* Login Button */
-.login-button {
-  color: #fff;
-  font-family: var(--font-poppins), "Poppins", sans-serif;
-  font-size: 10px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: normal;
-  border-radius: 10px;
-  background: #f60;
-  padding: 12px 24px;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.login-button:hover {
-  background: #e55500;
-}
-
-/* Hero Title */
-.hero-title {
-  color: #fff;
-  font-family: var(--font-michroma), "Michroma", sans-serif;
-  font-size: 55px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: normal;
-  animation: slideInLeft 1s ease-out 0.2s both;
 }
 
 @keyframes slideInLeft {
@@ -225,33 +212,6 @@ main {
   }
 }
 
-/* Hero Description */
-.hero-description {
-  color: #fff;
-  font-family: var(--font-poppins), "Poppins", sans-serif;
-  font-size: 15px;
-  font-style: normal;
-  font-weight: 200;
-  line-height: normal;
-  animation: slideInLeft 1s ease-out 0.4s both;
-}
-
-/* Search Container */
-.search-container {
-  width: 330px;
-  height: 50px;
-  flex-shrink: 0;
-  border-radius: 60px;
-  border: 1px solid #e0e0e0;
-  background: rgba(255, 255, 255, 0.07);
-  display: flex;
-  align-items: center;
-  padding: 9px;
-  /* gap: 8px; */
-  transition: all 0.3s ease;
-  animation: slideInUp 1s ease-out 0.6s both;
-}
-
 @keyframes slideInUp {
   from {
     opacity: 0;
@@ -263,60 +223,115 @@ main {
   }
 }
 
-.search-container:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: #f60;
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-.search-container:focus-within {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: #f60;
-  box-shadow: 0 0 20px rgba(255, 102, 0, 0.3);
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 0.4;
+  }
 }
 
-/* Search Input */
-.search-input {
-  flex: 1;
-  background: transparent;
+@keyframes typing {
+  0%,
+  80%,
+  100% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes messageSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translate(100%, 20px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+/* ==========================================================================
+   REUSABLE BUTTON COMPONENTS
+   ========================================================================== */
+
+.btn-base {
+  font-family: var(--font-poppins), "Poppins", sans-serif;
   border: none;
-  outline: none;
-  color: #fff;
-  font-family: var(--font-poppins), "Poppins", sans-serif;
-  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
   font-style: normal;
-  font-weight: 400;
   line-height: normal;
-  /* padding-left: 24px; */
-}
-
-.search-input::placeholder {
-  color: rgba(255, 255, 255, 0.7);
-}
-
-/* Search Text */
-.search-text {
-  /* flex: 1; */
-  color: #fff;
-  font-family: var(--font-poppins), "Poppins", sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: normal;
-  padding-left: 24px;
-  padding-right: 19px;
-  /* margin-right: 16px; */
-  display: flex;
+  text-decoration: none;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
 }
 
-/* Try Now Button */
-.lets-chat-button {
+/* Button implementations */
+.login-button {
+  font-family: var(--font-poppins), "Poppins", sans-serif;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 500;
+  border-radius: 10px;
+  background: var(--brand-orange);
+  padding: 12px 24px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.login-button:hover {
+  background: var(--brand-orange-hover);
+}
+
+.lets-chat-button,
+.try-now-button,
+.ayo-coba-button {
   width: 120px;
   height: 35px;
   flex-shrink: 0;
   border-radius: 60px;
   border: 1px solid #e0e0e0;
-  background: #f60;
+  background: var(--brand-orange);
   color: #fff;
   font-family: var(--font-poppins), "Poppins", sans-serif;
   font-size: 14px;
@@ -325,11 +340,142 @@ main {
   transition: background-color 0.3s ease;
 }
 
-.try-now-button:hover {
-  background: #e55500;
+.lets-chat-button:hover,
+.try-now-button:hover,
+.ayo-coba-button:hover {
+  background: var(--brand-orange-hover);
 }
 
-/* Spline Container */
+.try-now-secondary-button {
+  width: 120px;
+  height: 35px;
+  flex-shrink: 0;
+  border-radius: 60px;
+  border: 1px solid #e0e0e0;
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+  font-family: var(--font-poppins), "Poppins", sans-serif;
+  font-size: 14px;
+  font-weight: 300;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.try-now-secondary-button:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* ==========================================================================
+   PAGE LAYOUTS
+   ========================================================================== */
+
+/* Home Page */
+.home-page {
+  background: transparent;
+  color: #fff;
+  animation: fadeIn 0.8s ease-out;
+  position: relative;
+  height: 100vh;
+}
+
+body:has(.home-page) {
+  background: #0a0a0a;
+}
+
+main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 32px 64px;
+}
+
+/* Chat Page */
+.chat-page {
+  background: #000000;
+  min-height: 100vh;
+  padding: 16px;
+}
+
+/* ==========================================================================
+   HERO SECTION COMPONENTS
+   ========================================================================== */
+
+.hero-title {
+  color: #fff;
+  font-family: var(--font-michroma), "Michroma", sans-serif;
+  font-size: 55px;
+  font-weight: 400;
+  line-height: normal;
+  animation: slideInLeft 1s ease-out 0.2s both;
+}
+
+.hero-description {
+  color: #fff;
+  font-family: var(--font-poppins), "Poppins", sans-serif;
+  font-size: 18px;
+  font-weight: 200;
+  line-height: normal;
+  animation: slideInLeft 1s ease-out 0.4s both;
+}
+
+/* Search Components */
+.search-container {
+  width: 330px;
+  height: 50px;
+  flex-shrink: 0;
+  border-radius: 60px;
+  border: 1px solid #e0e0e0;
+  background: rgba(255, 255, 255, 0.07);
+  display: flex;
+  align-items: center;
+  padding: 9px;
+  transition: all 0.3s ease;
+  animation: slideInUp 1s ease-out 0.6s both;
+}
+
+.search-container:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--brand-orange);
+}
+
+.search-container:focus-within {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: var(--brand-orange);
+  box-shadow: 0 0 20px rgba(255, 102, 0, 0.3);
+}
+
+.search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #fff;
+  font-family: var(--font-poppins), "Poppins", sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: normal;
+}
+
+.search-input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.search-text {
+  color: #fff;
+  font-family: var(--font-poppins), "Poppins", sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: normal;
+  padding-left: 24px;
+  padding-right: 19px;
+  display: flex;
+  align-items: center;
+}
+
+/* ==========================================================================
+   SPLINE & LOADING COMPONENTS
+   ========================================================================== */
+
 .spline-container {
   width: 470px;
   height: 238px;
@@ -338,11 +484,8 @@ main {
   overflow: hidden;
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.02);
-  /* backdrop-filter: blur(10px); */
-  /* border: 1px solid rgba(255, 255, 255, 0.1); */
 }
 
-/* Spline Loading Styles */
 .spline-loading {
   display: flex;
   flex-direction: column;
@@ -360,18 +503,9 @@ main {
   width: 50px;
   height: 50px;
   border: 3px solid rgba(255, 102, 0, 0.3);
-  border-top: 3px solid #f60;
+  border-top: 3px solid var(--brand-orange);
   border-radius: 50%;
   animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
 }
 
 .loading-text {
@@ -383,34 +517,12 @@ main {
   animation: pulse 2s ease-in-out infinite;
 }
 
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 0.8;
-  }
-  50% {
-    opacity: 0.4;
-  }
-}
+/* ==========================================================================
+   SECTION TWO COMPONENTS
+   ========================================================================== */
 
-/* Responsive Design */
-@media (max-width: 1200px) {
-  main {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    padding: 32px 16px;
-  }
-
-  .spline-container {
-    margin-left: 0;
-    margin-top: 32px;
-  }
-}
-
-/* Section Two Styles */
 .section-two {
-  background: transparent; /* Ubah dari #1a1a1a ke transparan untuk Threads background */
+  background: transparent;
   min-height: 100vh;
   padding: 100px 16px;
   display: flex;
@@ -432,8 +544,7 @@ main {
   color: #fff;
   text-align: center;
   font-family: var(--font-michroma), "Michroma", sans-serif;
-  font-size: 20px; /* Ukuran yang lebih seimbang */
-  font-style: normal;
+  font-size: 20px;
   font-weight: 400;
   line-height: normal;
   margin: 0;
@@ -441,30 +552,27 @@ main {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 80px; /* Adjust height */
+  min-height: 80px;
 }
 
-/* Custom styling for typewriter effect in SectionTwo */
+/* Typewriter effect styling */
 .section-two-title .overflow-hidden div {
   font-family: var(--font-michroma), "Michroma", sans-serif !important;
   color: #fff !important;
   font-weight: 400 !important;
-  font-size: 40px !important; /* Ensure consistent size */
+  font-size: 40px !important;
 }
 
-/* Make all text in typewriter white */
 .section-two-title span {
   color: #fff !important;
 }
 
-/* Override blue colors to white, keep orange for Co-Ped AI */
 .section-two-title .text-blue-500 {
   color: #fff !important;
 }
 
-/* Keep Co-Ped AI orange */
 .section-two-title .text-orange-500 {
-  color: #f60 !important;
+  color: var(--brand-orange) !important;
 }
 
 .section-two-description {
@@ -472,7 +580,6 @@ main {
   text-align: center;
   font-family: var(--font-poppins), "Poppins", sans-serif;
   font-size: 15px;
-  font-style: normal;
   font-weight: 200;
   line-height: normal;
   margin: 0;
@@ -525,35 +632,48 @@ main {
   background: rgba(255, 255, 255, 0.12);
 } */
 
+/* ==========================================================================
+   CARD COMPONENTS
+   ========================================================================== */
+
 .cards-container {
   display: flex;
   gap: 20px;
   align-items: flex-end;
   justify-content: center;
   flex-wrap: wrap;
-  /* max-width: 1100px; */
   animation: slideInUp 1s ease-out 0.6s both;
 }
 
+/* Base card styles */
 .card {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: transform 0.3s ease;
+  border-radius: 20px;
+  flex-shrink: 0;
 }
 
 .card:hover {
   transform: translateY(-5px);
 }
 
+/* Card text base styles */
+.card-text {
+  font-family: var(--font-poppins), "Poppins", sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: normal;
+  margin: 0;
+}
+
+/* Specific card implementations */
 .card-1 {
   width: 202px;
   height: 349px;
-  flex-shrink: 0;
-  border-radius: 20px;
   overflow: hidden;
-  position: relative;
 }
 
 .card-image {
@@ -563,32 +683,23 @@ main {
 .card-2 {
   width: 225px;
   height: 307px;
-  flex-shrink: 0;
-  border-radius: 20px;
-  background: #f60;
-  /* border: 1px solid rgba(255, 255, 255, 0.1); */
+  background: var(--brand-orange);
   padding: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .card-2-text {
-  color: #1a1a1a;
   font-family: var(--font-poppins), "Poppins", sans-serif;
   font-size: 14px;
-  font-style: normal;
   font-weight: 400;
   line-height: normal;
-  text-align: center;
   margin: 0;
+  color: #1a1a1a;
+  text-align: center;
 }
 
 .card-3 {
   width: 225px;
   height: 211px;
-  flex-shrink: 0;
-  border-radius: 20px;
   background: #d9d9d9;
   padding: 20px;
 }
@@ -603,21 +714,18 @@ main {
 }
 
 .card-3-text {
-  color: #1a1a1a;
   font-family: var(--font-poppins), "Poppins", sans-serif;
   font-size: 14px;
-  font-style: normal;
   font-weight: 400;
   line-height: normal;
-  text-align: center;
   margin: 0;
+  color: #1a1a1a;
+  text-align: center;
 }
 
 .card-4 {
   width: 225px;
   height: 307px;
-  flex-shrink: 0;
-  border-radius: 20px;
   background: #525252;
   padding: 30px;
 }
@@ -635,63 +743,149 @@ main {
   color: #fff;
   font-family: var(--font-poppins), "Poppins", sans-serif;
   font-size: 60px;
-  font-style: normal;
   font-weight: 400;
   line-height: normal;
   margin: 0;
 }
 
 .card-4-text {
-  color: #fff;
   font-family: var(--font-poppins), "Poppins", sans-serif;
   font-size: 14px;
-  font-style: normal;
   font-weight: 400;
   line-height: normal;
-  text-align: center;
   margin: 0;
+  color: #fff;
+  text-align: center;
 }
 
 .card-5 {
   width: 202px;
   height: 349px;
-  border-radius: 20px;
-  background: #f60;
+  background: var(--brand-orange);
   padding: 30px;
 }
 
 .card-5-content {
   display: flex;
   flex-direction: column;
-  align-items: left;
-  justify-content: end;
+  align-items: flex-start;
+  justify-content: flex-end;
   height: 100%;
   gap: 20px;
 }
 
 .card-5-text {
-  color: #1a1a1a;
   font-family: var(--font-poppins), "Poppins", sans-serif;
   font-size: 14px;
-  font-style: normal;
   font-weight: 400;
   line-height: normal;
-  text-align: left;
   margin: 0;
+  color: #1a1a1a;
+  text-align: left;
 }
 
 .card-icon {
   filter: brightness(0.2);
 }
 
+/* Chat Page Styles */
+.chat-page {
+  background: #000000;
+  min-height: 100vh;
+  padding: 16px;
+}
+
+/* ==========================================================================
+   CHAT & INTERACTION COMPONENTS
+   ========================================================================== */
+
+/* Custom scrollbar */
+.chat-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  background: rgba(255, 102, 0, 0.6);
+  border-radius: 3px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 102, 0, 0.8);
+}
+
+/* Interactive elements */
+.chat-history-item {
+  transition: all 0.2s ease-in-out;
+}
+
+.chat-history-item:hover {
+  background: rgba(60, 60, 60, 0.56);
+  border-radius: 10px;
+}
+
+.dropdown-menu {
+  animation: slideDown 0.2s ease-out;
+}
+
+.message-enter {
+  animation: messageSlideIn 0.3s ease-out;
+}
+
+.animate-slideInUp {
+  animation: slideInUp 0.4s ease-out;
+}
+
+/* Typing indicator */
+.typing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.typing-dot {
+  width: 8px;
+  height: 8px;
+  background: #fff;
+  border-radius: 50%;
+  animation: typing 1.4s infinite ease-in-out;
+}
+
+.typing-dot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN
+   ========================================================================== */
+
+/* Large screens (1200px and down) */
+@media (max-width: 1200px) {
+  main {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 32px 16px;
+  }
+
+  .spline-container {
+    margin-left: 0;
+    margin-top: 32px;
+  }
+}
+
+/* Medium screens (1024px and down) */
 @media (max-width: 1024px) {
   .hero-title {
     font-size: 48px;
-  }
-
-  .search-container {
-    width: 100%;
-    max-width: 480px;
   }
 
   .spline-container {
@@ -700,8 +894,8 @@ main {
   }
 
   .section-two-title {
-    font-size: 24px; /* Reduced from 42px */
-    min-height: 80px; /* Adjusted for smaller text */
+    font-size: 24px;
+    min-height: 80px;
   }
 
   .cards-container {
@@ -730,117 +924,11 @@ main {
   }
 }
 
-/* Chat Page Styles */
-.chat-page {
-  background: #000000;
-  min-height: 100vh;
-  padding: 16px;
-}
-
-/* Custom scrollbar for chat area */
-.chat-messages::-webkit-scrollbar {
-  width: 6px;
-}
-
-.chat-messages::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
-}
-
-.chat-messages::-webkit-scrollbar-thumb {
-  background: rgba(255, 102, 0, 0.6);
-  border-radius: 3px;
-}
-
-.chat-messages::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 102, 0, 0.8);
-}
-
-/* Chat history hover effect */
-.chat-history-item {
-  transition: all 0.2s ease-in-out;
-}
-
-.chat-history-item:hover {
-  background: rgba(60, 60, 60, 0.56);
-  border-radius: 10px;
-}
-
-/* Dropdown animation */
-.dropdown-menu {
-  animation: slideDown 0.2s ease-out;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Message bubble animations */
-.message-enter {
-  animation: messageSlideIn 0.3s ease-out;
-}
-
-@keyframes messageSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Loading indicator for AI response */
-.typing-indicator {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.typing-dot {
-  width: 8px;
-  height: 8px;
-  background: #fff;
-  border-radius: 50%;
-  animation: typing 1.4s infinite ease-in-out;
-}
-
-.typing-dot:nth-child(1) {
-  animation-delay: -0.32s;
-}
-
-.typing-dot:nth-child(2) {
-  animation-delay: -0.16s;
-}
-
-@keyframes typing {
-  0%,
-  80%,
-  100% {
-    transform: scale(0.8);
-    opacity: 0.5;
-  }
-  40% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
+/* Small screens (768px and down) */
 @media (max-width: 768px) {
+  /* Hero section */
   .hero-title {
     font-size: 36px;
-  }
-
-  .hero-description {
-    font-size: 18px;
   }
 
   .search-container {
@@ -859,6 +947,7 @@ main {
     height: 312px;
   }
 
+  /* Header */
   header {
     padding: 16px;
     flex-direction: column;
@@ -873,15 +962,15 @@ main {
     order: 3;
   }
 
-  /* Section Two Mobile */
+  /* Section Two */
   .section-two {
     padding: 60px 16px;
   }
 
   .section-two-title {
-    font-size: 18px; /* Reduced from 28px */
+    font-size: 18px;
     line-height: 1.2;
-    min-height: 70px; /* Adjusted for smaller text */
+    min-height: 70px;
   }
 
   .section-two-description {
@@ -889,17 +978,7 @@ main {
     line-height: 1.4;
   }
 
-  .section-two-buttons {
-    flex-direction: column;
-    gap: 12px;
-    width: 100%;
-  }
-
-  .ayo-coba-button,
-  .try-now-secondary-button {
-    width: 200px;
-  }
-
+  /* Cards */
   .cards-container {
     flex-direction: column;
     align-items: center;
@@ -931,7 +1010,7 @@ main {
     font-size: 48px;
   }
 
-  /* Chat page mobile styles */
+  /* Chat page */
   .chat-page {
     flex-direction: column;
     padding: 8px;

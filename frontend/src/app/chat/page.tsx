@@ -8,6 +8,8 @@ import {
   MagnifyingGlassIcon,
   EllipsisHorizontalIcon,
   ArrowLeftIcon,
+  Bars3Icon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { apiService, ChatMessage, ChatRoom } from "@/services/api";
 import FormattedResponse from "@/components/FormattedResponse";
@@ -32,8 +34,26 @@ export default function ChatPage() {
   const [isTyping, setIsTyping] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastType, setToastType] = useState<"error" | "success" | "info">(
+    "error"
+  );
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Toast notification function
+  const showToast = (
+    message: string,
+    type: "error" | "success" | "info" = "error"
+  ) => {
+    setToastMessage(message);
+    setToastType(type);
+    // Auto hide toast after 4 seconds
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 4000);
+  };
 
   // Load chat rooms from API
   useEffect(() => {
@@ -53,7 +73,7 @@ export default function ChatPage() {
       }
     } catch (error) {
       console.error("Failed to load chat rooms:", error);
-      setError("Gagal memuat riwayat chat");
+      showToast("Gagal memuat riwayat chat", "error");
     } finally {
       setIsLoading(false);
     }
@@ -93,7 +113,7 @@ export default function ChatPage() {
         if (newRoom) {
           roomId = newRoom.roomId;
         } else {
-          setError("Gagal membuat chat baru");
+          showToast("Gagal membuat chat baru", "error");
           return;
         }
       }
@@ -193,7 +213,7 @@ export default function ChatPage() {
           )
         );
       } else {
-        setError("Gagal mengirim pesan");
+        showToast("Gagal mengirim pesan", "error");
         // Remove the temporary message if API fails
         setChatRooms((prev) =>
           prev.map((room) =>
@@ -208,7 +228,7 @@ export default function ChatPage() {
       }
     } catch (error) {
       console.error("Failed to send message:", error);
-      setError("Gagal mengirim pesan");
+      showToast("Gagal mengirim pesan", "error");
       // Remove the temporary message if error occurs
       setChatRooms((prev) =>
         prev.map((room) =>
@@ -232,11 +252,12 @@ export default function ChatPage() {
         const newRoom = response.data.room;
         setChatRooms((prev) => [newRoom, ...prev]);
         setActiveRoom(newRoom.roomId);
+        showToast("Chat baru berhasil dibuat", "success");
         return newRoom;
       }
     } catch (error) {
       console.error("Failed to create new chat:", error);
-      setError("Gagal membuat chat baru");
+      showToast("Gagal membuat chat baru", "error");
     }
     return null;
   };
@@ -252,7 +273,7 @@ export default function ChatPage() {
       }
     } catch (error) {
       console.error("Failed to create new chat:", error);
-      setError("Gagal membuat chat baru");
+      showToast("Gagal membuat chat baru", "error");
     }
     return null;
   };
@@ -275,11 +296,11 @@ export default function ChatPage() {
           )
         );
       } else {
-        setError("Gagal mengubah nama chat");
+        showToast("Gagal mengubah nama chat", "error");
       }
     } catch (error) {
       console.error("Failed to rename room:", error);
-      setError("Gagal mengubah nama chat");
+      showToast("Gagal mengubah nama chat", "error");
     }
     setIsRenaming(null);
     setShowDropdown(null);
@@ -300,11 +321,11 @@ export default function ChatPage() {
         }
         setShowDropdown(null);
       } else {
-        setError("Gagal menghapus chat");
+        showToast("Gagal menghapus chat", "error");
       }
     } catch (error) {
       console.error("Failed to delete room:", error);
-      setError("Gagal menghapus chat");
+      showToast("Gagal menghapus chat", "error");
     }
   };
 
@@ -323,11 +344,27 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex h-screen bg-black p-2">
+    <div className="flex h-screen bg-black p-2 relative">
+      {/* Sidebar Toggle Button */}
+      <button
+        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+        className="fixed top-4 left-4 z-50 bg-[#2A2A2A] hover:bg-[#3A3A3A] text-white p-2 rounded-lg transition-colors border border-gray-600"
+      >
+        {isSidebarOpen ? (
+          <XMarkIcon className="w-5 h-5" />
+        ) : (
+          <Bars3Icon className="w-5 h-5" />
+        )}
+      </button>
+
       {/* Sidebar */}
-      <aside className="w-64 bg-[#2A2A2A] rounded-xl p-3 mr-2 flex flex-col">
+      <aside
+        className={`fixed top-0 left-0 h-full w-64 bg-[#2A2A2A] p-3 flex flex-col z-40 transition-transform duration-300 ease-in-out rounded-r-xl ${
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
         {/* Logo */}
-        <div className="mb-3">
+        <div className="mb-3 mt-12">
           <Image
             src="/coped-logo-white-full.png"
             alt="CoPed Logo"
@@ -446,227 +483,317 @@ export default function ChatPage() {
         </button>
       </aside>
 
-      {/* Model Selection - Just the dropdown */}
-      <div className="mr-2 flex items-start">
-        <select
-          value={selectedModel}
-          onChange={(e) =>
-            setSelectedModel(e.target.value as "native" | "langchain")
-          }
-          className="bg-[#3C3C3C] text-white px-2 py-1.5 rounded-lg poppins-regular border border-gray-600 focus:border-[#F60] outline-none text-xs"
-        >
-          <option value="native">Native</option>
-          <option value="langchain">LangChain</option>
-        </select>
-      </div>
+      {/* Overlay for mobile when sidebar is open */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
 
-      {/* Main Chat Area */}
-      <main className="flex-1 flex flex-col">
-        {/* Error Message */}
-        {error && (
-          <div className="bg-red-500 text-white p-2 mb-2 rounded-lg text-xs">
-            {error}
-            <button
-              onClick={() => setError(null)}
-              className="ml-2 text-red-200 hover:text-white"
-            >
-              ×
-            </button>
-          </div>
-        )}
+      {/* Main Content Area - Full width when sidebar is closed */}
+      <div
+        className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${
+          isSidebarOpen ? "md:ml-64" : "ml-0"
+        }`}
+      >
+        {/* Top bar with model selection */}
+        <div className="flex items-center justify-between p-2 pt-16 md:pt-4">
+          <div></div> {/* Spacer */}
+          {/* Model Selection */}
+          <select
+            value={selectedModel}
+            onChange={(e) =>
+              setSelectedModel(e.target.value as "native" | "langchain")
+            }
+            className="bg-[#3C3C3C] text-white px-3 py-2 rounded-lg poppins-regular border border-gray-600 focus:border-[#F60] outline-none text-xs"
+          >
+            <option value="native">Native</option>
+            <option value="langchain">LangChain</option>
+          </select>
+        </div>
 
-        {/* Messages Area */}
-        <div className="flex-1 bg-transparent rounded-xl p-4 mb-2 overflow-y-auto chat-messages">
-          {activeRoom && getCurrentRoom() ? (
-            <div className="space-y-4">
-              {getCurrentRoom()!.messages.map((message, index) => (
-                <div key={index} className="space-y-4">
-                  {/* User Question - Right side */}
-                  <div className="flex justify-end">
-                    <div className="bg-[#F60] text-white p-3 rounded-2xl rounded-tr-md max-w-2xl poppins-regular text-sm">
-                      {message.question}
+        {/* Main Chat Area */}
+        <main className="flex-1 flex flex-col">
+          {/* Messages Area */}
+          <div className="flex-1 bg-transparent rounded-xl p-4 mb-2 overflow-y-auto chat-messages">
+            {activeRoom && getCurrentRoom() ? (
+              <div className="space-y-4">
+                {getCurrentRoom()!.messages.map((message, index) => (
+                  <div key={index} className="space-y-4">
+                    {/* User Question - Right side */}
+                    <div className="flex justify-end">
+                      <div className="bg-[#F60] text-white p-3 rounded-2xl rounded-tr-md max-w-2xl poppins-regular text-sm">
+                        {message.question}
+                      </div>
                     </div>
-                  </div>
 
-                  {/* AI Answer - Left side (only show if answer exists) */}
-                  {message.answer && (
-                    <div className="flex justify-start">
-                      <div className="flex items-start space-x-3">
-                        <Image
-                          src="/coped-logo-black-circle.png"
-                          alt="AI"
-                          width={32}
-                          height={32}
-                          className="w-8 h-8 rounded-full mt-1 flex-shrink-0"
-                        />
-                        <div className="bg-[#2A2A2A] text-white p-3 rounded-2xl rounded-tl-md max-w-2xl poppins-regular text-sm">
-                          <FormattedResponse
-                            content={message.answer}
-                            className="mb-0"
+                    {/* AI Answer - Left side (only show if answer exists) */}
+                    {message.answer && (
+                      <div className="flex justify-start">
+                        <div className="flex items-start space-x-3">
+                          <Image
+                            src="/coped-logo-black-circle.png"
+                            alt="AI"
+                            width={32}
+                            height={32}
+                            className="w-8 h-8 rounded-full mt-1 flex-shrink-0"
                           />
+                          <div className="bg-[#2A2A2A] text-white p-3 rounded-2xl rounded-tl-md max-w-2xl poppins-regular text-sm">
+                            <FormattedResponse
+                              content={message.answer}
+                              className="mb-0"
+                            />
 
-                          {/* Simplified metadata with box design */}
-                          <div className="mt-3 flex justify-between items-center">
-                            {/* System box - Left */}
-                            <div className="bg-gray-700/50 px-2 py-1 rounded-lg border border-gray-600">
-                              <span className="text-xs text-gray-300 font-medium">
-                                {message.ragSystem === "native"
-                                  ? "Native RAG"
-                                  : message.ragSystem === "langchain_enhanced"
-                                  ? "LangChain Enhanced"
-                                  : message.ragSystem === "langchain"
-                                  ? "LangChain"
-                                  : message.ragSystem || "Unknown"}
-                                {/* Show auto-selected indicator */}
-                                {(message as any).autoSelected ? " (Auto)" : ""}
-                              </span>
+                            {/* Simplified metadata with box design */}
+                            <div className="mt-3 flex justify-between items-center">
+                              {/* System box - Left */}
+                              <div className="bg-gray-700/50 px-2 py-1 rounded-lg border border-gray-600">
+                                <span className="text-xs text-gray-300 font-medium">
+                                  {message.ragSystem === "native"
+                                    ? "Native RAG"
+                                    : message.ragSystem === "langchain_enhanced"
+                                    ? "LangChain Enhanced"
+                                    : message.ragSystem === "langchain"
+                                    ? "LangChain"
+                                    : message.ragSystem || "Unknown"}
+                                  {/* Show auto-selected indicator */}
+                                  {(message as any).autoSelected
+                                    ? " (Auto)"
+                                    : ""}
+                                </span>
+                              </div>
+
+                              {/* Response time box - Right */}
+                              <div className="bg-gray-700/50 px-2 py-1 rounded-lg border border-gray-600">
+                                <span className="text-xs text-gray-300 font-medium">
+                                  {message.responseTime
+                                    ? message.responseTime >= 60000
+                                      ? `${Math.round(
+                                          message.responseTime / 60000
+                                        )}m ${Math.round(
+                                          (message.responseTime % 60000) / 1000
+                                        )}s`
+                                      : `${Math.round(
+                                          message.responseTime / 1000
+                                        )}s`
+                                    : "0s"}
+                                </span>
+                              </div>
+
+                              <div></div>
                             </div>
 
-                            {/* Response time box - Right */}
-                            <div className="bg-gray-700/50 px-2 py-1 rounded-lg border border-gray-600">
-                              <span className="text-xs text-gray-300 font-medium">
-                                {message.responseTime
-                                  ? message.responseTime >= 60000
-                                    ? `${Math.round(
-                                        message.responseTime / 60000
-                                      )}m ${Math.round(
-                                        (message.responseTime % 60000) / 1000
-                                      )}s`
-                                    : `${Math.round(
-                                        message.responseTime / 1000
-                                      )}s`
-                                  : "0s"}
-                              </span>
-                            </div>
-
-                            <div></div>
-                          </div>
-
-                          {/* Error message if any */}
-                          {message.isError && (
-                            <div
-                              className={`mt-2 rounded-lg px-2 py-1 border ${
-                                message.errorMessage?.includes("konteks hukum")
-                                  ? "bg-orange-900/30 border-orange-700"
-                                  : "bg-red-900/30 border-red-700"
-                              }`}
-                            >
-                              <span
-                                className={`text-xs ${
+                            {/* Error message if any */}
+                            {message.isError && (
+                              <div
+                                className={`mt-2 rounded-lg px-2 py-1 border ${
                                   message.errorMessage?.includes(
                                     "konteks hukum"
                                   )
-                                    ? "text-orange-300"
-                                    : "text-red-300"
+                                    ? "bg-orange-900/30 border-orange-700"
+                                    : "bg-red-900/30 border-red-700"
                                 }`}
                               >
-                                {message.errorMessage?.includes("konteks hukum")
-                                  ? "⚠️ Legal Context: "
-                                  : "Error: "}
-                                {message.errorMessage}
-                              </span>
-                            </div>
-                          )}
+                                <span
+                                  className={`text-xs ${
+                                    message.errorMessage?.includes(
+                                      "konteks hukum"
+                                    )
+                                      ? "text-orange-300"
+                                      : "text-red-300"
+                                  }`}
+                                >
+                                  {message.errorMessage?.includes(
+                                    "konteks hukum"
+                                  )
+                                    ? "⚠️ Legal Context: "
+                                    : "Error: "}
+                                  {message.errorMessage}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {/* Typing indicator */}
+                {isTyping && (
+                  <div className="flex justify-start">
+                    <div className="flex items-start space-x-3">
+                      <Image
+                        src="/coped-logo-black-circle.png"
+                        alt="AI"
+                        width={32}
+                        height={32}
+                        className="w-8 h-8 rounded-full mt-1 flex-shrink-0"
+                      />
+                      <div className="bg-[#2A2A2A] text-white p-3 rounded-2xl rounded-tl-md">
+                        <div className="typing-indicator">
+                          <div className="typing-dot"></div>
+                          <div className="typing-dot"></div>
+                          <div className="typing-dot"></div>
                         </div>
                       </div>
                     </div>
-                  )}
-                </div>
-              ))}
+                  </div>
+                )}
 
-              {/* Typing indicator */}
-              {isTyping && (
-                <div className="flex justify-start">
-                  <div className="flex items-start space-x-3">
-                    <Image
-                      src="/coped-logo-black-circle.png"
-                      alt="AI"
-                      width={32}
-                      height={32}
-                      className="w-8 h-8 rounded-full mt-1 flex-shrink-0"
-                    />
-                    <div className="bg-[#2A2A2A] text-white p-3 rounded-2xl rounded-tl-md">
-                      <div className="typing-indicator">
-                        <div className="typing-dot"></div>
-                        <div className="typing-dot"></div>
-                        <div className="typing-dot"></div>
-                      </div>
-                    </div>
+                <div ref={messagesEndRef} />
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center max-w-2xl">
+                  <p className="text-gray-400 poppins-regular text-sm mb-6">
+                    Mulai chat dengan mengetik pertanyaan Anda di bawah atau
+                    pilih contoh pertanyaan:
+                  </p>
+
+                  {/* Template Questions */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+                    {[
+                      "Apa isi dari pasal 1 ayat 1?",
+                      "Apa yang dimaksud dengan kedaulatan rakyat?",
+                      "Bagaimana sistem pemerintahan menurut UUD 1945?",
+                      "Apa saja hak asasi manusia yang dijamin dalam UUD 1945?",
+                    ].map((question, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentMessage(question)}
+                        className="bg-[#2A2A2A] hover:bg-[#3A3A3A] text-white p-3 rounded-lg transition-colors poppins-regular text-xs text-left border border-gray-600 hover:border-[#F60]"
+                      >
+                        {question}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="bg-blue-900/20 border border-blue-700/50 rounded-lg p-3">
+                    <p className="text-blue-300 poppins-regular text-xs mb-2">
+                      Fokus Hukum Konstitusi Indonesia
+                    </p>
+                    <p className="text-gray-400 poppins-regular text-xs">
+                      • Hanya menjawab pertanyaan tentang UUD 1945 dan hukum
+                      konstitusi
+                      <br />
+                      • Menggunakan UUD 1945 sebagai sumber tunggal untuk
+                      akurasi maksimal
+                      <br />• Pertanyaan di luar konteks hukum akan ditolak
+                      secara otomatis
+                    </p>
                   </div>
                 </div>
-              )}
-
-              <div ref={messagesEndRef} />
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center max-w-2xl">
-                <p className="text-gray-400 poppins-regular text-sm mb-6">
-                  Mulai chat dengan mengetik pertanyaan Anda di bawah atau pilih
-                  contoh pertanyaan:
-                </p>
-
-                {/* Template Questions */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
-                  {[
-                    "Apa isi dari pasal 1 ayat 1?",
-                    "Apa yang dimaksud dengan kedaulatan rakyat?",
-                    "Bagaimana sistem pemerintahan menurut UUD 1945?",
-                    "Apa saja hak asasi manusia yang dijamin dalam UUD 1945?",
-                  ].map((question, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setCurrentMessage(question)}
-                      className="bg-[#2A2A2A] hover:bg-[#3A3A3A] text-white p-3 rounded-lg transition-colors poppins-regular text-xs text-left border border-gray-600 hover:border-[#F60]"
-                    >
-                      {question}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="bg-blue-900/20 border border-blue-700/50 rounded-lg p-3">
-                  <p className="text-blue-300 poppins-regular text-xs mb-2">
-                    Fokus Hukum Konstitusi Indonesia
-                  </p>
-                  <p className="text-gray-400 poppins-regular text-xs">
-                    • Hanya menjawab pertanyaan tentang UUD 1945 dan hukum
-                    konstitusi
-                    <br />
-                    • Menggunakan UUD 1945 sebagai sumber tunggal untuk akurasi
-                    maksimal
-                    <br />• Pertanyaan di luar konteks hukum akan ditolak secara
-                    otomatis
-                  </p>
-                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
 
-        {/* Message Input - Always show, even when no active room */}
-        <div className="p-2">
-          <div className="relative w-[600px] mx-auto">
-            <input
-              type="text"
-              value={currentMessage}
-              onChange={(e) => setCurrentMessage(e.target.value)}
-              onKeyPress={(e) => {
-                if (e.key === "Enter") {
-                  handleSendMessage();
-                }
-              }}
-              placeholder="tanyakan sesuatu..."
-              className="w-full bg-transparent text-white px-3 py-2 pr-10 rounded-lg poppins-regular placeholder-gray-400 border border-gray-600 focus:border-[#F60] outline-none text-xs"
-            />
+          {/* Message Input - Always show, even when no active room */}
+          <div className="p-2">
+            <div className="relative w-[600px] mx-auto">
+              <input
+                type="text"
+                value={currentMessage}
+                onChange={(e) => setCurrentMessage(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === "Enter") {
+                    handleSendMessage();
+                  }
+                }}
+                placeholder="tanyakan sesuatu..."
+                className="w-full bg-transparent text-white px-3 py-2 pr-10 rounded-lg poppins-regular placeholder-gray-400 border border-gray-600 focus:border-[#F60] outline-none text-xs"
+              />
+              <button
+                onClick={handleSendMessage}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-[#F60] hover:text-[#e55500] transition-colors"
+              >
+                <MagnifyingGlassIcon className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </main>
+      </div>
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div
+          className={`fixed bottom-6 right-6 z-50 max-w-sm transform transition-all duration-300 ease-in-out animate-slideInUp`}
+        >
+          <div
+            className={`flex items-center p-4 rounded-lg shadow-lg border ${
+              toastType === "error"
+                ? "bg-red-900/90 border-red-700 text-red-100"
+                : toastType === "success"
+                ? "bg-green-900/90 border-green-700 text-green-100"
+                : "bg-blue-900/90 border-blue-700 text-blue-100"
+            }`}
+          >
+            <div className="flex items-center">
+              {toastType === "error" && (
+                <svg
+                  className="w-5 h-5 mr-3 flex-shrink-0"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              )}
+              {toastType === "success" && (
+                <svg
+                  className="w-5 h-5 mr-3 flex-shrink-0"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              )}
+              {toastType === "info" && (
+                <svg
+                  className="w-5 h-5 mr-3 flex-shrink-0"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              )}
+              <span className="text-sm font-medium poppins-regular">
+                {toastMessage}
+              </span>
+            </div>
             <button
-              onClick={handleSendMessage}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-[#F60] hover:text-[#e55500] transition-colors"
+              onClick={() => setToastMessage(null)}
+              className="ml-4 text-current opacity-70 hover:opacity-100 transition-opacity"
             >
-              <MagnifyingGlassIcon className="w-4 h-4" />
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
             </button>
           </div>
         </div>
-      </main>
+      )}
     </div>
   );
 }
