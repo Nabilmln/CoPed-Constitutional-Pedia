@@ -515,15 +515,22 @@ export default function ChatPage() {
 
         {/* Main Chat Area */}
         <main className="flex-1 flex flex-col">
-          {/* Messages Area */}
-          <div className="flex-1 bg-transparent rounded-xl p-4 mb-2 overflow-y-auto chat-messages">
+          {/* Messages Area - Fixed height with scroll */}
+          <div
+            className="flex-1 bg-transparent overflow-y-auto chat-messages"
+            style={{
+              maxHeight: "calc(100vh - 200px)",
+              minHeight: "400px",
+              scrollBehavior: "smooth",
+            }}
+          >
             {activeRoom && getCurrentRoom() ? (
-              <div className="space-y-4">
+              <div className="space-y-6 max-w-4xl mr-2">
                 {getCurrentRoom()!.messages.map((message, index) => (
-                  <div key={index} className="space-y-4">
+                  <div key={index} className="space-y-3">
                     {/* User Question - Right side */}
-                    <div className="flex justify-end">
-                      <div className="bg-[#F60] text-white p-3 rounded-2xl rounded-tr-md max-w-2xl poppins-regular text-sm">
+                    <div className="flex justify-end mb-2">
+                      <div className="bg-[#F60] text-white p-4 rounded-2xl rounded-br-md max-w-md lg:max-w-lg poppins-regular text-xs shadow-lg">
                         {message.question}
                       </div>
                     </div>
@@ -531,63 +538,67 @@ export default function ChatPage() {
                     {/* AI Answer - Left side (only show if answer exists) */}
                     {message.answer && (
                       <div className="flex justify-start">
-                        <div className="flex items-start space-x-3">
+                        <div className="flex items-start space-x-3 max-w-full">
                           <Image
                             src="/coped-logo-black-circle.png"
                             alt="AI"
-                            width={32}
-                            height={32}
-                            className="w-8 h-8 rounded-full mt-1 flex-shrink-0"
+                            width={40}
+                            height={40}
+                            className="w-10 h-10 rounded-full mt-1 flex-shrink-0 shadow-md"
                           />
-                          <div className="bg-[#2A2A2A] text-white p-3 rounded-2xl rounded-tl-md max-w-2xl poppins-regular text-sm">
-                            <FormattedResponse
-                              content={message.answer}
-                              className="mb-0"
-                            />
+                          <div className="bg-[#2A2A2A] text-white p-4 rounded-2xl rounded-tl-md max-w-2xl lg:max-w-3xl poppins-regular text-xs shadow-lg border border-gray-700/50">
+                            <div className="prose prose-xs prose-invert max-w-none">
+                              <FormattedResponse
+                                content={message.answer}
+                                className="mb-0 leading-relaxed text-white text-xs"
+                              />
+                            </div>
 
-                            {/* Simplified metadata with box design */}
-                            <div className="mt-3 flex justify-between items-center">
-                              {/* System box - Left */}
-                              <div className="bg-gray-700/50 px-2 py-1 rounded-lg border border-gray-600">
-                                <span className="text-xs text-gray-300 font-medium">
-                                  {message.ragSystem === "native"
-                                    ? "Native RAG"
-                                    : message.ragSystem === "langchain_enhanced"
-                                    ? "LangChain Enhanced"
-                                    : message.ragSystem === "langchain"
-                                    ? "LangChain"
-                                    : message.ragSystem || "Unknown"}
-                                  {/* Show auto-selected indicator */}
-                                  {(message as any).autoSelected
-                                    ? " (Auto)"
-                                    : ""}
-                                </span>
+                            {/* Metadata section */}
+                            <div className="mt-4 pt-3 border-t border-gray-600/30 flex flex-wrap gap-2 items-center justify-between">
+                              {/* System info */}
+                              <div className="flex items-center gap-2">
+                                <div className="bg-gray-700/50 px-3 py-1.5 rounded-full border border-gray-600">
+                                  <span className="text-xs text-gray-300 font-medium">
+                                    {message.ragSystem === "native"
+                                      ? "Native RAG"
+                                      : message.ragSystem ===
+                                        "langchain_enhanced"
+                                      ? "LangChain Enhanced"
+                                      : message.ragSystem === "langchain"
+                                      ? "LangChain"
+                                      : message.ragSystem || "Unknown"}
+                                    {(message as any).autoSelected
+                                      ? " (Auto)"
+                                      : ""}
+                                  </span>
+                                </div>
+
+                                {/* Response time */}
+                                <div className="bg-gray-700/50 px-3 py-1.5 rounded-full border border-gray-600">
+                                  <span className="text-xs text-gray-300 font-medium">
+                                    {" "}
+                                    {message.responseTime
+                                      ? message.responseTime >= 60000
+                                        ? `${Math.round(
+                                            message.responseTime / 60000
+                                          )}m ${Math.round(
+                                            (message.responseTime % 60000) /
+                                              1000
+                                          )}s`
+                                        : `${Math.round(
+                                            message.responseTime / 1000
+                                          )}s`
+                                      : "0s"}
+                                  </span>
+                                </div>
                               </div>
-
-                              {/* Response time box - Right */}
-                              <div className="bg-gray-700/50 px-2 py-1 rounded-lg border border-gray-600">
-                                <span className="text-xs text-gray-300 font-medium">
-                                  {message.responseTime
-                                    ? message.responseTime >= 60000
-                                      ? `${Math.round(
-                                          message.responseTime / 60000
-                                        )}m ${Math.round(
-                                          (message.responseTime % 60000) / 1000
-                                        )}s`
-                                      : `${Math.round(
-                                          message.responseTime / 1000
-                                        )}s`
-                                    : "0s"}
-                                </span>
-                              </div>
-
-                              <div></div>
                             </div>
 
                             {/* Error message if any */}
                             {message.isError && (
                               <div
-                                className={`mt-2 rounded-lg px-2 py-1 border ${
+                                className={`mt-3 rounded-lg px-3 py-2 border ${
                                   message.errorMessage?.includes(
                                     "konteks hukum"
                                   )
@@ -607,8 +618,8 @@ export default function ChatPage() {
                                   {message.errorMessage?.includes(
                                     "konteks hukum"
                                   )
-                                    ? "⚠️ Legal Context: "
-                                    : "Error: "}
+                                    ? " Legal Context: "
+                                    : " Error: "}
                                   {message.errorMessage}
                                 </span>
                               </div>
@@ -627,11 +638,11 @@ export default function ChatPage() {
                       <Image
                         src="/coped-logo-black-circle.png"
                         alt="AI"
-                        width={32}
-                        height={32}
-                        className="w-8 h-8 rounded-full mt-1 flex-shrink-0"
+                        width={40}
+                        height={40}
+                        className="w-10 h-10 rounded-full mt-1 flex-shrink-0 shadow-md"
                       />
-                      <div className="bg-[#2A2A2A] text-white p-3 rounded-2xl rounded-tl-md">
+                      <div className="bg-[#2A2A2A] text-white p-4 rounded-2xl rounded-tl-md shadow-lg border border-gray-700/50">
                         <div className="typing-indicator">
                           <div className="typing-dot"></div>
                           <div className="typing-dot"></div>
@@ -645,15 +656,28 @@ export default function ChatPage() {
                 <div ref={messagesEndRef} />
               </div>
             ) : (
-              <div className="flex items-center justify-center h-full">
-                <div className="text-center max-w-2xl">
-                  <p className="text-gray-400 poppins-regular text-sm mb-6">
-                    Mulai chat dengan mengetik pertanyaan Anda di bawah atau
-                    pilih contoh pertanyaan:
-                  </p>
+              <div className="flex items-center justify-center min-h-full p-8">
+                <div className="text-center max-w-3xl w-full">
+                  {/* Welcome message */}
+                  <div className="mb-8">
+                    <Image
+                      src="/coped-logo-white-full.png"
+                      alt="CoPed Logo"
+                      width={120}
+                      height={24}
+                      className="h-6 w-auto mx-auto mb-4 opacity-80"
+                    />
+                    <h2 className="text-white poppins-medium text-lg mb-2">
+                      Selamat Datang di CoPed Chat
+                    </h2>
+                    <p className="text-gray-400 poppins-regular text-sm mb-6">
+                      Mulai konsultasi hukum konstitusi dengan mengetik
+                      pertanyaan Anda atau pilih contoh di bawah:
+                    </p>
+                  </div>
 
                   {/* Template Questions */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-8">
                     {[
                       "Apa isi dari pasal 1 ayat 1?",
                       "Apa yang dimaksud dengan kedaulatan rakyat?",
@@ -663,26 +687,62 @@ export default function ChatPage() {
                       <button
                         key={index}
                         onClick={() => setCurrentMessage(question)}
-                        className="bg-[#2A2A2A] hover:bg-[#3A3A3A] text-white p-3 rounded-lg transition-colors poppins-regular text-xs text-left border border-gray-600 hover:border-[#F60]"
+                        className="bg-[#2A2A2A] hover:bg-[#3A3A3A] text-white p-3 rounded-lg transition-all duration-200 poppins-regular text-xs text-left border border-gray-600 hover:border-[#F60] hover:shadow-md hover:shadow-[#F60]/10"
                       >
                         {question}
                       </button>
                     ))}
                   </div>
 
-                  <div className="bg-blue-900/20 border border-blue-700/50 rounded-lg p-3">
-                    <p className="text-blue-300 poppins-regular text-xs mb-2">
-                      Fokus Hukum Konstitusi Indonesia
-                    </p>
-                    <p className="text-gray-400 poppins-regular text-xs">
-                      • Hanya menjawab pertanyaan tentang UUD 1945 dan hukum
-                      konstitusi
-                      <br />
-                      • Menggunakan UUD 1945 sebagai sumber tunggal untuk
-                      akurasi maksimal
-                      <br />• Pertanyaan di luar konteks hukum akan ditolak
-                      secara otomatis
-                    </p>
+                  {/* Information box */}
+                  <div className="bg-gradient-to-r from-blue-900/30 to-indigo-900/30 border border-blue-700/50 rounded-xl p-6 backdrop-blur-sm">
+                    <div className="flex items-center justify-center mb-3">
+                      <div className="bg-blue-600/20 p-2 rounded-lg mr-3">
+                        <svg
+                          className="w-5 h-5 text-blue-400"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </div>
+                      <h3 className="text-blue-300 poppins-medium text-sm">
+                        Fokus Hukum Konstitusi Indonesia
+                      </h3>
+                    </div>
+                    <div className="space-y-2 text-left">
+                      <div className="flex items-start">
+                        <span className="text-blue-400 text-xs mr-2 mt-1">
+                          •
+                        </span>
+                        <p className="text-gray-300 poppins-regular text-xs">
+                          Hanya menjawab pertanyaan tentang UUD 1945 dan hukum
+                          konstitusi
+                        </p>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-blue-400 text-xs mr-2 mt-1">
+                          •
+                        </span>
+                        <p className="text-gray-300 poppins-regular text-xs">
+                          Menggunakan UUD 1945 sebagai sumber tunggal untuk
+                          akurasi maksimal
+                        </p>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-blue-400 text-xs mr-2 mt-1">
+                          •
+                        </span>
+                        <p className="text-gray-300 poppins-regular text-xs">
+                          Pertanyaan di luar konteks hukum akan ditolak secara
+                          otomatis
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -690,27 +750,46 @@ export default function ChatPage() {
           </div>
 
           {/* Message Input - Always show, even when no active room */}
-          <div className="p-2">
-            <div className="relative w-[600px] mx-auto">
-              <input
-                type="text"
+          {/* <div className="px-4 py-5 bg-black/30 backdrop-blur-sm border-t border-gray-700/30"> */}
+          <div className="relative w-185 max-w-none mx-auto px-8">
+            <div className="relative flex items-center justify-center gap-4 bg-[#1A1A1A] rounded-2xl border border-gray-600/50 focus-within:border-[#F60] transition-all duration-200 ">
+              <textarea
                 value={currentMessage}
                 onChange={(e) => setCurrentMessage(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === "Enter") {
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
                     handleSendMessage();
                   }
                 }}
-                placeholder="tanyakan sesuatu..."
-                className="w-full bg-transparent text-white px-3 py-2 pr-10 rounded-lg poppins-regular placeholder-gray-400 border border-gray-600 focus:border-[#F60] outline-none text-xs"
+                placeholder="Tanyakan sesuatu tentang hukum konstitusi Indonesia..."
+                rows={1}
+                className="flex-1 bg-transparent text-white px-4 py-3 poppins-regular placeholder-gray-400 outline-none text-xs resize-none overflow-hidden min-h-[52px] max-h-36"
+                style={{
+                  scrollbarWidth: "thin",
+                  scrollbarColor: "#4a5568 transparent",
+                  width: "100%",
+                }}
+                onInput={(e) => {
+                  const target = e.target as HTMLTextAreaElement;
+                  target.style.height = "auto";
+                  target.style.height =
+                    Math.min(target.scrollHeight, 144) + "px";
+                }}
               />
               <button
                 onClick={handleSendMessage}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-[#F60] hover:text-[#e55500] transition-colors"
+                disabled={!currentMessage.trim()}
+                className={`p-2 mr-1 rounded-xl transition-all duration-200 flex-shrink-0 ${
+                  currentMessage.trim()
+                    ? "text-white bg-[#F60] hover:bg-[#e55500] shadow-lg hover:shadow-[#F60]/20 hover:scale-105"
+                    : "text-gray-500 bg-gray-700/50 cursor-allowed"
+                }`}
               >
-                <MagnifyingGlassIcon className="w-4 h-4" />
+                <MagnifyingGlassIcon className="w-6 h-6" />
               </button>
             </div>
+            {/* </div> */}
           </div>
         </main>
       </div>

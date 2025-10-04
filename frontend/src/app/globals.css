@@ -71,6 +71,22 @@
   }
 }
 
+/* Toast slide-up animation */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slideInUp {
+  animation: slideInUp 0.3s ease-out;
+}
+
 /* Smooth scrolling for chat */
 .chat-messages {
   scroll-behavior: smooth;
@@ -78,19 +94,40 @@
 
 /* Custom scrollbar for chat */
 .chat-messages::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
 .chat-messages::-webkit-scrollbar-track {
-  background: transparent;
+  background: rgba(42, 42, 42, 0.3);
+  border-radius: 4px;
 }
 
 .chat-messages::-webkit-scrollbar-thumb {
-  background: #4a5568;
-  border-radius: 3px;
+  background: linear-gradient(180deg, #f60 0%, #e55500 100%);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 102, 0, 0.3);
 }
 
 .chat-messages::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #ff7a1a 0%, #ff6600 100%);
+  box-shadow: 0 2px 4px rgba(255, 102, 0, 0.3);
+}
+
+/* Scrollbar untuk textarea */
+textarea::-webkit-scrollbar {
+  width: 4px;
+}
+
+textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+textarea::-webkit-scrollbar-thumb {
+  background: #4a5568;
+  border-radius: 2px;
+}
+
+textarea::-webkit-scrollbar-thumb:hover {
   background: #718096;
 }
 
@@ -98,10 +135,14 @@
 .formatted-response {
   line-height: 1.6;
   color: #e2e8f0;
+  text-align: justify;
+  text-justify: inter-word;
 }
 
 .formatted-response p {
   margin-bottom: 12px;
+  text-align: justify;
+  text-justify: inter-word;
 }
 
 .formatted-response .highlight {
@@ -119,17 +160,21 @@
   margin: 16px 0 8px 0;
   border-left: 3px solid #f97316;
   padding-left: 12px;
+  text-align: left;
 }
 
 .formatted-response ul {
   margin: 8px 0;
-  padding-left: 20px;
+  padding-left: 16px;
   list-style: none;
 }
 
 .formatted-response li {
   margin-bottom: 6px;
   position: relative;
+  padding-left: 16px;
+  text-align: justify;
+  text-justify: inter-word;
 }
 
 .formatted-response li::before {
@@ -137,7 +182,7 @@
   color: #f97316;
   font-weight: bold;
   position: absolute;
-  left: -15px;
+  left: 0;
 }
 
 .formatted-response ol {
@@ -156,4 +201,24 @@
   color: #f97316;
   font-weight: bold;
   margin-right: 8px;
+}
+
+/* Additional formatting for better text alignment */
+.formatted-response h3,
+.formatted-response h4,
+.formatted-response h5,
+.formatted-response h6 {
+  text-align: left;
+  color: #f97316;
+}
+
+.formatted-response strong,
+.formatted-response b {
+  color: #f97316;
+}
+
+/* Ensure proper spacing for justified text */
+.formatted-response {
+  hyphens: auto;
+  word-spacing: 0.1em;
 }

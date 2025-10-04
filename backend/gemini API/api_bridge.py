@@ -190,8 +190,6 @@ INSTRUKSI:
 5. Berikan konteks hukum yang relevan
 
 CATATAN: Ini adalah respons fallback karena sistem RAG sedang mengalami gangguan, namun tetap berdasarkan pengetahuan konstitusi Indonesia.
-
-JAWABAN KOMPREHENSIF:
 """
         
         start_time = time.time()
