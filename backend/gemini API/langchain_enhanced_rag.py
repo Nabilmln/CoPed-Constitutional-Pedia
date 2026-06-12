@@ -5,18 +5,23 @@ Advanced RAG dengan Vector Database untuk akurasi maksimal
 
 import os
 import json
+import re
 from datetime import datetime
 from typing import List, Dict, Any, Optional
+
+# BM25 for keyword search (Requirement 4.1, 4.2)
+from rank_bm25 import BM25Okapi
 
 # LangChain imports
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings import SentenceTransformerEmbeddings
-from langchain.chains import RetrievalQA
-from langchain.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate
 from langchain_google_genai import GoogleGenerativeAI
 from langchain_core.documents import Document
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough
 
 # Existing imports
 from document_cache import DocumentCache
@@ -30,6 +35,11 @@ class LangChainEnhancedRAG:
         self.vectorstore = None
         self.retriever = None
         self.qa_chain = None
+        
+        # BM25 index for keyword search (Requirement 4.1, 4.2)
+        self.bm25_index = None
+        self.bm25_docs = []  # Store documents for BM25
+        self.bm25_metadatas = []  # Store metadata for BM25
         
         # Setup components
         self.setup_embeddings()
@@ -211,8 +221,8 @@ JAWABAN BERDASARKAN ANALISIS MULTI-DOKUMEN UUD 1945:
         return split_docs, processed_files
     
     def build_vector_database(self, documents: List[Document], force_rebuild=False):
-        """Build vector database dengan Chroma"""
-        print(f"\n🔍 Building vector database...")
+        """Build vector database dengan Chroma and BM25 index"""
+        print(f"\n🔍 Building vector database and BM25 index...")
         
         # Check if database already exists
         if os.path.exists(self.persist_directory) and not force_rebuild:
@@ -234,6 +244,18 @@ JAWABAN BERDASARKAN ANALISIS MULTI-DOKUMEN UUD 1945:
             # Persist to disk
             self.vectorstore.persist()
             print(f"💾 Vector database saved to {self.persist_directory}")
+        
+        # Build BM25 index for keyword search (Requirement 4.1, 4.2)
+        print(f"🔨 Building BM25 keyword search index...")
+        collection = self.vectorstore._collection
+        all_docs_data = collection.get()
+        self.bm25_docs = all_docs_data['documents']
+        self.bm25_metadatas = all_docs_data['metadatas']
+        
+        # Tokenize documents for BM25 (simple word-based tokenization)
+        tokenized_docs = [doc.lower().split() for doc in self.bm25_docs]
+        self.bm25_index = BM25Okapi(tokenized_docs)
+        print(f"✅ BM25 index built with {len(self.bm25_docs)} documents")
         
         # Setup retriever dengan parameter yang sama seperti qa_chain
         self.retriever = self.vectorstore.as_retriever(
@@ -261,16 +283,18 @@ JAWABAN BERDASARKAN ANALISIS MULTI-DOKUMEN UUD 1945:
             }
         )
         
-        self.qa_chain = RetrievalQA.from_chain_type(
-            llm=self.llm,
-            chain_type="stuff",  # Stuff all retrieved docs into prompt
-            retriever=self.retriever,
-            chain_type_kwargs={
-                "prompt": self.prompt,
-                "document_variable_name": "context"
-            },
-            return_source_documents=True,
-            verbose=False  # Set True untuk debugging
+        # Modern LCEL chain approach (LangChain 0.1.0+)
+        def format_docs(docs):
+            return "\n\n".join(doc.page_content for doc in docs)
+        
+        self.qa_chain = (
+            {
+                "context": self.retriever | format_docs,
+                "question": RunnablePassthrough()
+            }
+            | self.prompt
+            | self.llm
+            | StrOutputParser()
         )
         
         print("✅ Constitutional document QA Chain configured with enhanced retrieval (k=12)")
@@ -278,6 +302,11 @@ JAWABAN BERDASARKAN ANALISIS MULTI-DOKUMEN UUD 1945:
     def enhanced_constitutional_search(self, question: str, k: int = 12):
         """Enhanced search specifically for constitutional documents"""
         print(f"🔍 Enhanced constitutional search for: {question}")
+        
+        # PRE-COMPUTE semantic similarity BEFORE iteration loop (Requirement 4.4, 4.7)
+        # This fixes the 200x slowdown issue caused by calling similarity_search inside loop
+        semantic_docs = self.vectorstore.similarity_search(question, k=20)
+        semantic_content_set = {doc.page_content for doc in semantic_docs}
         
         # Get all documents from collection
         collection = self.vectorstore._collection
@@ -320,12 +349,10 @@ JAWABAN BERDASARKAN ANALISIS MULTI-DOKUMEN UUD 1945:
             if 'bentuk dan kedaulatan' in doc_lower:
                 score += 5
             
-            # Add semantic similarity as secondary factor
-            semantic_docs = self.vectorstore.similarity_search(question, k=20)
-            for semantic_doc in semantic_docs:
-                if semantic_doc.page_content == doc:
-                    score += 1  # Small boost for semantic relevance
-                    break
+            # Add semantic similarity as secondary factor using pre-computed set
+            # NO similarity_search inside loop (Requirement 4.5)
+            if doc in semantic_content_set:
+                score += 1  # Small boost for semantic relevance
             
             if score > 0:
                 scored_chunks.append((score, i, doc, metadata))
@@ -346,6 +373,162 @@ JAWABAN BERDASARKAN ANALISIS MULTI-DOKUMEN UUD 1945:
             print(f"   🎯 Top score: {top_chunks[0][0]} for chunk with preview: {top_chunks[0][2][:100]}...")
         
         return result_docs
+    
+    def bm25_search(self, question: str, k: int = 12) -> List[Document]:
+        """BM25 keyword search for exact Pasal/Ayat queries (Requirement 4.1, 4.2)"""
+        if not self.bm25_index:
+            raise ValueError("BM25 index not initialized. Build vector database first.")
+        
+        print(f"🔍 BM25 keyword search for: {question}")
+        
+        # Tokenize query
+        tokenized_query = question.lower().split()
+        
+        # Get BM25 scores for all documents
+        scores = self.bm25_index.get_scores(tokenized_query)
+        
+        # Get top k document indices
+        top_indices = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:k]
+        
+        # Convert to Document objects with relevance scores
+        result_docs = []
+        for idx in top_indices:
+            if scores[idx] > 0:  # Only include documents with non-zero scores
+                doc = Document(
+                    page_content=self.bm25_docs[idx],
+                    metadata={
+                        **self.bm25_metadatas[idx],
+                        'bm25_score': float(scores[idx]),
+                        'search_method': 'bm25_keyword'
+                    }
+                )
+                result_docs.append(doc)
+        
+        print(f"📊 BM25 search results: {len(result_docs)} documents")
+        if result_docs:
+            print(f"   🎯 Top BM25 score: {result_docs[0].metadata.get('bm25_score', 0):.4f}")
+        
+        return result_docs
+    
+    def detect_pasal_ayat_query(self, question: str) -> bool:
+        """Detect if query is asking for specific Pasal/Ayat (Requirement 4.3)"""
+        question_lower = question.lower()
+        
+        # Pattern matching for Pasal/Ayat queries
+        pasal_patterns = [
+            r'pasal\s+\d+',  # "pasal 1", "pasal 33"
+            r'ayat\s+\(\d+\)',  # "ayat (1)", "ayat (2)"
+            r'ayat\s+\d+',  # "ayat 1", "ayat 2"
+            r'bab\s+[ivxlcdm]+',  # "bab i", "bab ii"
+            r'ps\.\s*\d+',  # "ps. 1", "ps.33"
+        ]
+        
+        for pattern in pasal_patterns:
+            if re.search(pattern, question_lower):
+                return True
+        
+        return False
+    
+    def hybrid_search(self, question: str, k: int = 12, alpha: float = None, beta: float = None) -> List[Document]:
+        """
+        Hybrid search combining BM25 and semantic search (Requirement 4.2, 4.3, 4.6)
+        
+        Args:
+            question: Query string
+            k: Number of results to return
+            alpha: BM25 weight (auto-adjusted if None based on query type)
+            beta: Semantic search weight (auto-adjusted if None based on query type)
+        
+        Returns:
+            List of Document objects sorted by combined score
+        """
+        if not self.bm25_index or not self.vectorstore:
+            raise ValueError("BM25 index or vectorstore not initialized")
+        
+        print(f"🔍 Hybrid search for: {question}")
+        
+        # Detect query type and adjust weights (Requirement 4.3)
+        is_pasal_query = self.detect_pasal_ayat_query(question)
+        
+        if alpha is None or beta is None:
+            if is_pasal_query:
+                # Boost BM25 for exact Pasal/Ayat queries
+                alpha = 0.7
+                beta = 0.3
+                print(f"   🎯 Detected Pasal/Ayat query → BM25 weight boosted (α={alpha}, β={beta})")
+            else:
+                # Boost semantic for conceptual queries
+                alpha = 0.3
+                beta = 0.7
+                print(f"   🔍 Detected conceptual query → Semantic weight boosted (α={alpha}, β={beta})")
+        
+        # Execute BM25 and semantic search in parallel (conceptually)
+        # In Python, we execute them sequentially but could use asyncio for true parallelism
+        bm25_docs = self.bm25_search(question, k=k*2)  # Get more candidates
+        semantic_docs = self.vectorstore.similarity_search(question, k=k*2)
+        
+        # Build scoring maps
+        bm25_scores = {}
+        for doc in bm25_docs:
+            content = doc.page_content
+            bm25_scores[content] = doc.metadata.get('bm25_score', 0)
+        
+        # Get semantic scores (ChromaDB similarity scores are 0-1 normalized)
+        # We'll use position-based scoring: top result = 1.0, decreasing linearly
+        semantic_scores = {}
+        for i, doc in enumerate(semantic_docs):
+            content = doc.page_content
+            # Position-based score: 1.0 for first, decreasing by 1/(k*2)
+            semantic_scores[content] = 1.0 - (i / (k * 2))
+        
+        # Normalize BM25 scores to 0-1 range
+        if bm25_scores:
+            max_bm25 = max(bm25_scores.values()) if bm25_scores else 1.0
+            if max_bm25 > 0:
+                bm25_scores = {k: v / max_bm25 for k, v in bm25_scores.items()}
+        
+        # Combine scores: combined = alpha * bm25 + beta * semantic
+        combined_scores = {}
+        all_contents = set(bm25_scores.keys()) | set(semantic_scores.keys())
+        
+        for content in all_contents:
+            bm25_score = bm25_scores.get(content, 0)
+            semantic_score = semantic_scores.get(content, 0)
+            combined_scores[content] = alpha * bm25_score + beta * semantic_score
+        
+        # Sort by combined score descending and take top k
+        sorted_contents = sorted(combined_scores.items(), key=lambda x: x[1], reverse=True)[:k]
+        
+        # Build result documents with combined scores
+        result_docs = []
+        content_to_metadata = {}
+        
+        # Get metadata from original docs
+        for doc in bm25_docs + semantic_docs:
+            if doc.page_content not in content_to_metadata:
+                content_to_metadata[doc.page_content] = doc.metadata
+        
+        for content, combined_score in sorted_contents:
+            metadata = content_to_metadata.get(content, {})
+            metadata.update({
+                'combined_score': float(combined_score),
+                'bm25_score': float(bm25_scores.get(content, 0)),
+                'semantic_score': float(semantic_scores.get(content, 0)),
+                'search_method': 'hybrid',
+                'alpha': alpha,
+                'beta': beta
+            })
+            doc = Document(page_content=content, metadata=metadata)
+            result_docs.append(doc)
+        
+        print(f"📊 Hybrid search results: {len(result_docs)} documents")
+        if result_docs:
+            top_meta = result_docs[0].metadata
+            print(f"   🎯 Top combined score: {top_meta.get('combined_score', 0):.4f}")
+            print(f"      BM25: {top_meta.get('bm25_score', 0):.4f}, Semantic: {top_meta.get('semantic_score', 0):.4f}")
+        
+        return result_docs
+    
     def query(self, question: str) -> Dict[str, Any]:
         """Query the enhanced RAG system with constitutional document focus and enhanced search"""
         if not self.qa_chain:
@@ -368,8 +551,8 @@ JAWABAN BERDASARKAN ANALISIS MULTI-DOKUMEN UUD 1945:
             # Build prompt manually for better control
             filled_prompt = self.prompt.format(context=context, question=question)
             
-            # Get answer from LLM
-            answer = self.llm(filled_prompt)
+            # Get answer from LLM using the chain
+            answer = self.qa_chain.invoke(question)
             
             # Extract enhanced source information
             sources = []

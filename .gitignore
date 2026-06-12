@@ -177,13 +177,23 @@ Desktop.ini
 # SENSITIVE DATA
 # ================================
 
-# Environment variables
+# Environment variables - EXCLUDE all .env files
 .env
 .env.local
 .env.development
 .env.test
 .env.production
 .env.staging
+backend/.env
+backend/gemini API/.env
+frontend/.env
+frontend/.env.local
+
+# IMPORTANT: Keep .env.example files for documentation
+!.env.example
+!backend/.env.example
+!backend/gemini API/.env.example
+!frontend/.env.example
 
 # API Keys & Secrets
 secrets/
@@ -205,6 +215,8 @@ credentials.json
 # RAG System cache
 rag_cache/
 query_cache/
+backend/gemini API/cache/
+backend/gemini API/dataset_cache/
 
 # PDF processing temp
 pdf_temp/
@@ -228,3 +240,25 @@ coverage.xml
 *.bak
 *.backup
 *.orig
+
+# ================================
+# TEST & TASK ARTIFACTS (Development only)
+# ================================
+
+# Python verification scripts (not formal test suite)
+backend/gemini API/test_*.py
+backend/gemini API/verify_env_setup.py
+backend/verify-env-setup.js
+
+# Task completion reports
+TASK_*_REPORT.md
+TASK_*_COMPLETION_REPORT.md
+**/TASK_*.md
+implementation_plan.md
+
+# Kiro AI specs (internal tooling)
+.kiro/
+
+# Frontend dev test pages
+frontend/src/app/test/
+frontend/src/utils/testConnection.js

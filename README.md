@@ -77,19 +77,149 @@ pip install -r requirements.txt
 cd ../../frontend
 npm install
 
-# 4) Environment (backend/.env)
-# contoh
-MONGODB_URI=mongodb+srv://<conn-string>
-JWT_SECRET=<secret>
-GEMINI_API_KEY=<key>
-PORT=3001
+# 4) Environment Variables Setup
+# Copy .env.example files and fill in your actual values
+cd ../backend
+cp .env.example .env
+
+# Edit backend/.env with your actual credentials
+# REQUIRED: GEMINI_API_KEY - Get from https://makersuite.google.com/app/apikey
+# REQUIRED: MONGODB_URI - Get from MongoDB Atlas Dashboard
+# See "Environment Variables" section below for all variables
+
+# Also setup Python service environment
+cd "gemini API"
+cp .env.example .env
+# Edit with your GEMINI_API_KEY (same as backend)
 
 # 5) Run (dev)
-# Terminal A
+# Terminal A - Start Backend (Node.js on port 5000)
 cd backend && npm start
-# Terminal B
+
+# Terminal B - Start Python RAG Service (FastAPI on port 5001)
+cd "backend/gemini API" && python python_service.py
+
+# Terminal C - Start Frontend (Next.js on port 3000)
 cd frontend && npm run dev
-# Frontend: http://localhost:3000  |  Backend: http://localhost:3001
+
+# Frontend: http://localhost:3000  |  Backend API: http://localhost:5000
+```
+
+---
+
+## Environment Variables
+
+The application uses environment variables for configuration and security. **Never commit your .env file to version control.**
+
+### Required Variables
+
+These variables **MUST** be set for the application to start:
+
+| Variable | Description | Example | Where to Get |
+|----------|-------------|---------|--------------|
+| `GEMINI_API_KEY` | Google Gemini API key (REQUIRED) | `AIzaSy...` | [Google AI Studio](https://makersuite.google.com/app/apikey) |
+| `MONGODB_URI` | MongoDB Atlas connection string | `mongodb+srv://user:pass@cluster...` | MongoDB Atlas Dashboard |
+| `JWT_SECRET` | Secret key for JWT token signing | `your_32_char_secret...` | Generate with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
+
+### Optional Variables (with defaults)
+
+| Variable | Description | Default | Valid Values |
+|----------|-------------|---------|--------------|
+| `GEMINI_MODEL` | Gemini model to use | `gemini-1.5-flash` | `gemini-1.5-flash`, `gemini-2.5-flash`, `gemini-2.0-flash` |
+| `PYTHON_SERVICE_URL` | FastAPI service URL | `http://localhost:5001` | Any valid URL |
+| `CACHE_TTL` | Cache time-to-live (seconds) | `3600` | Any positive integer |
+| `CACHE_MAX_SIZE` | Maximum cache entries | `100` | Any positive integer |
+| `RELEVANCE_THRESHOLD` | Minimum relevance score (anti-hallucination) | `0.3` | `0.0` - `1.0` |
+| `PORT` | Backend server port | `5000` | Any valid port number |
+| `NODE_ENV` | Node environment | `development` | `development`, `production` |
+| `FRONTEND_URL` | Frontend application URL | `http://localhost:3000` | Any valid URL |
+| `DB_NAME` | Database name | `CoPed` | Any valid database name |
+| `RAG_TIMEOUT` | RAG processing timeout (ms) | `30000` | Any positive integer |
+| `MAX_CHAT_ROOMS` | Maximum concurrent chat rooms | `10` | Any positive integer |
+| `DEFAULT_RAG_SYSTEM` | Default RAG system | `native` | `native`, `enhanced`, `auto` |
+| `LOG_LEVEL` | Logging verbosity | `info` | `debug`, `info`, `warn`, `error` |
+
+### Environment Setup Instructions
+
+1. **Copy the template files:**
+   ```bash
+   # Backend (Node.js)
+   cp backend/.env.example backend/.env
+   
+   # Python RAG Service
+   cp "backend/gemini API/.env.example" "backend/gemini API/.env"
+   ```
+
+2. **Get your Gemini API Key:**
+   - Visit [Google AI Studio](https://makersuite.google.com/app/apikey)
+   - Sign in with your Google account
+   - Create a new API key
+   - Copy the key (starts with `AIza...`)
+
+3. **Get your MongoDB connection string:**
+   - Log in to [MongoDB Atlas](https://cloud.mongodb.com)
+   - Go to your cluster → Connect → Connect your application
+   - Copy the connection string
+   - Replace `<username>`, `<password>`, and database name
+
+4. **Edit the .env files:**
+   ```bash
+   # backend/.env
+   GEMINI_API_KEY=AIzaSy...your-actual-key...
+   MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/CoPed?retryWrites=true&w=majority
+   JWT_SECRET=your-generated-32-character-secret-key
+   
+   # backend/gemini API/.env
+   GEMINI_API_KEY=AIzaSy...your-actual-key...
+   ```
+
+5. **Validate your configuration:**
+   ```bash
+   # Test Node.js environment validation
+   cd backend
+   node utils/envValidator.js
+   
+   # Test Python environment validation
+   cd "gemini API"
+   python env_validator.py
+   ```
+
+### Security Best Practices
+
+⚠️ **IMPORTANT Security Rules:**
+
+- ✅ **DO:** Load credentials from environment variables
+- ✅ **DO:** Keep `.env` files in `.gitignore`
+- ✅ **DO:** Use `.env.example` with placeholder values for documentation
+- ✅ **DO:** Rotate API keys regularly
+- ✅ **DO:** Use different keys for development and production
+- ❌ **DON'T:** Commit `.env` files to version control
+- ❌ **DON'T:** Hardcode API keys in source code
+- ❌ **DON'T:** Log or expose API keys in responses
+- ❌ **DON'T:** Share API keys in chat, email, or documentation
+
+### Environment Variable Validation
+
+The application automatically validates environment variables at startup:
+
+- **Required variables missing:** Application will fail to start with descriptive error
+- **Placeholder values detected:** Warning message will be shown
+- **Optional variables missing:** Default values will be used automatically
+
+**Startup validation output example:**
+```
+============================================================
+Environment Variable Validation
+============================================================
+✅ GEMINI_API_KEY: configured (key length: 39 chars)
+✅ GEMINI_MODEL: gemini-1.5-flash (default)
+✅ PYTHON_SERVICE_URL: http://localhost:5001 (default)
+✅ CACHE_TTL: 3600 (default)
+✅ CACHE_MAX_SIZE: 100 (default)
+✅ RELEVANCE_THRESHOLD: 0.3 (default)
+
+✅ Environment validation successful
+============================================================
 ```
 
 ---

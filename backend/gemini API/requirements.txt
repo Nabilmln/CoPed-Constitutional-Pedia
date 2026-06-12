@@ -1,34 +1,38 @@
-# 🤖 Indonesian Constitutional Law Chatbot - Production Requirements
-# Complete dependencies for both Native Multi-Document RAG and LangChain Enhanced RAG
+# CoPed RAG Optimization - FastAPI Service Dependencies
+# Python 3.9+ required
+# Install with: pip install -r requirements.txt
 
-# ===== CORE AI & GOOGLE INTEGRATION =====
-google-generativeai>=0.8.0
-python-dotenv>=1.0.0
-
-# ===== DOCUMENT PROCESSING =====
-PyPDF2>=3.0.0
-pypdf>=4.2.0
+# ===== FASTAPI SERVICE CORE =====
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+python-multipart>=0.0.9
+aiofiles>=23.2.1
 
 # ===== LANGCHAIN RAG SYSTEM =====
-# Core LangChain framework
-langchain>=0.1.20
 langchain-community>=0.0.38
 langchain-google-genai>=1.0.3
-langchain-text-splitters>=0.0.1
 
 # ===== VECTOR DATABASE & EMBEDDINGS =====
 chromadb>=0.4.24
 sentence-transformers>=2.7.0
-faiss-cpu>=1.7.4
 
-# ===== DATA PROCESSING =====
+# ===== DOCUMENT PROCESSING =====
+pypdf>=4.2.0
+rank-bm25>=0.2.2
+
+# ===== GOOGLE GEMINI API =====
+google-generativeai>=0.8.0
+
+# ===== ADDITIONAL DEPENDENCIES =====
+# Core LangChain framework
+langchain>=0.1.20
+langchain-text-splitters>=0.0.1
+
+# Configuration and environment
+python-dotenv>=1.0.0
+
+# Data processing utilities
 numpy>=1.24.0
-pandas>=2.0.0
 
-# ===== OPTIONAL ENHANCEMENTS =====
-tiktoken>=0.6.0        # Token counting for text analysis
-unstructured>=0.13.0   # Advanced document parsing
-
-# ===== SYSTEM UTILITIES =====
-# Required for caching and file operations (built-in dependencies)
-# hashlib, json, os, datetime - included in Python standard library
+# Additional libraries (optional but recommended)
+PyPDF2>=3.0.0
