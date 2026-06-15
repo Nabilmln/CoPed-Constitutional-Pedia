@@ -12,7 +12,7 @@ from typing import List, Dict, Any, Optional
 # BM25 for keyword search (Requirement 4.1, 4.2)
 from rank_bm25 import BM25Okapi
 
-# LangChain imports
+# LangChain imports``
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
@@ -35,6 +35,7 @@ class LangChainEnhancedRAG:
         self.vectorstore = None
         self.retriever = None
         self.qa_chain = None
+        self.llm = None
         
         # BM25 index for keyword search (Requirement 4.1, 4.2)
         self.bm25_index = None

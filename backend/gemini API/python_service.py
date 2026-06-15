@@ -6,6 +6,7 @@ Eliminates cold-start latency by loading RAG systems once at startup.
 import os
 import sys
 import time
+import re
 from datetime import datetime
 from typing import Optional, List, Literal
 from contextlib import asynccontextmanager
@@ -388,6 +389,342 @@ async def health_check():
         vector_db_status=vector_db_ok,
         gemini_api_status=gemini_ok
     )
+
+
+# =============================================================================
+# Helper Functions for /api/query
+# =============================================================================
+
+def validate_legal_context(question: str) -> tuple[bool, str]:
+    """
+    Validate if the question contains constitutional/legal context.
+    Matches logic in api_bridge.py
+    """
+    legal_keywords = [
+        'uud', 'undang-undang dasar', 'konstitusi', 'pasal', 'ayat', 'bab',
+        'presiden', 'mpr', 'dpr', 'mahkamah', 'kedaulatan', 'negara kesatuan',
+        'republik', 'hak asasi', 'pancasila', 'amandemen', 'pemerintahan'
+    ]
+    
+    non_legal_keywords = [
+        'komputer', 'software', 'programming', 'game', 'film', 'musik',
+        'sepak bola', 'makanan', 'resep', 'bisnis', 'marketing'
+    ]
+    
+    question_lower = question.lower()
+    
+    # Check for non-legal content
+    if any(keyword in question_lower for keyword in non_legal_keywords):
+        return False, "non_legal_content"
+    
+    # Check for legal content
+    if any(keyword in question_lower for keyword in legal_keywords):
+        return True, "legal_content_found"
+    
+    # Minimal context check
+    constitutional_terms = ['negara', 'rakyat', 'indonesia', 'aturan', 'hukum']
+    if any(term in question_lower for term in constitutional_terms):
+        return True, "constitutional_context"
+    
+    return False, "insufficient_legal_context"
+
+
+def auto_select_rag(question: str) -> str:
+    """
+    Auto select best RAG system based on question content with legal validation.
+    Returns "native", "langchain", or "legal_context_filter".
+    """
+    is_legal, _ = validate_legal_context(question)
+    
+    if not is_legal:
+        return "legal_context_filter"
+    
+    # If is legal, determine best engine based on keywords
+    legal_keywords = ['pasal', 'undang', 'konstitusi', 'hukum', 'peraturan', 'uud', 'ayat']
+    question_lower = question.lower()
+    
+    if any(keyword in question_lower for keyword in legal_keywords):
+        # Use Native RAG for direct legal/pasal questions for highest accuracy
+        return "native"
+    else:
+        # Use LangChain RAG for other conceptual constitutional questions
+        return "langchain"
+
+
+def extract_source_references(retrieved_docs: List, relevance_scores: dict = None) -> List[SourceReference]:
+    """
+    Extract Pasal/Ayat references from document metadata or content.
+    Creates preview text (first 100 characters) and includes relevance scores.
+    Returns a list of SourceReference objects.
+    """
+    sources = []
+    
+    # Map documents to scores if available
+    chunk_scores = {}
+    if relevance_scores and "chunk_scores" in relevance_scores:
+        for chunk, score in relevance_scores["chunk_scores"]:
+            if hasattr(chunk, 'page_content'):
+                chunk_scores[chunk.page_content] = score
+            else:
+                chunk_scores[str(chunk)] = score
+                
+    for doc in retrieved_docs:
+        # Handle both LangChain Document and dict
+        if hasattr(doc, 'page_content'):
+            content = doc.page_content
+            metadata = doc.metadata if hasattr(doc, 'metadata') else {}
+        elif isinstance(doc, dict):
+            content = doc.get('content') or doc.get('page_content') or str(doc)
+            metadata = doc.get('metadata') or doc
+        else:
+            content = str(doc)
+            metadata = {}
+            
+        # Extract score
+        score = chunk_scores.get(content, 0.5)
+        if 'relevance_score' in metadata:
+            score = metadata['relevance_score']
+        elif 'score' in metadata:
+            score = metadata['score']
+        elif 'combined_score' in metadata:
+            score = metadata['combined_score']
+        elif 'semantic_score' in metadata:
+            score = metadata['semantic_score']
+            
+        # Extract Pasal and Ayat from metadata or text
+        pasal_val = metadata.get('pasal_number')
+        ayat_val = metadata.get('ayat_number')
+        
+        if pasal_val is None:
+            pasal_match = re.search(r'[Pp]asal\s+(\d+)', content)
+            if pasal_match:
+                pasal_val = int(pasal_match.group(1))
+                
+        if ayat_val is None:
+            # Look for "ayat (1)" or "(1)"
+            ayat_match = re.search(r'[Aa]yat\s*\(?(\d+)\)?|^\s*\((\d+)\)', content, re.MULTILINE)
+            if ayat_match:
+                g1, g2 = ayat_match.groups()
+                ayat_val = int(g1 or g2)
+                
+        # Format citation reference
+        if pasal_val is not None and ayat_val is not None:
+            pasal_ayat = f"Pasal {pasal_val} Ayat {ayat_val}"
+        elif pasal_val is not None:
+            pasal_ayat = f"Pasal {pasal_val}"
+        elif 'source_file' in metadata:
+            pasal_ayat = metadata['source_file']
+        elif 'file' in metadata:
+            pasal_ayat = metadata['file']
+        else:
+            pasal_ayat = "UUD 1945"
+            
+        # Preview text (first 100 characters)
+        preview = content[:100]
+        if len(content) > 100:
+            preview += "..."
+            
+        chunk_id = metadata.get('chunk_id')
+        
+        ref = SourceReference(
+            pasal_ayat=pasal_ayat,
+            preview=preview,
+            relevance_score=float(score),
+            chunk_id=chunk_id
+        )
+        sources.append(ref)
+        
+    return sources
+
+
+@app.post("/api/query", response_model=QueryResponse)
+async def query_endpoint(request: QueryRequest):
+    """
+    POST endpoint for non-streaming RAG queries.
+    Routes queries to the appropriate RAG engine, runs anti-hallucination checks,
+    and returns a structured QueryResponse.
+    """
+    global native_rag, langchain_rag, service_stats
+    
+    start_time = time.time()
+    service_stats["total_queries"] += 1
+    
+    try:
+        question = request.question.strip()
+        selected_model = request.model
+        rag_type = request.rag_type
+        
+        # 1. Handle auto selection
+        actual_rag_type = rag_type
+        if rag_type == "auto":
+            actual_rag_type = auto_select_rag(question)
+            
+        # 2. Check for legal context filter
+        if actual_rag_type == "legal_context_filter":
+            elapsed_ms = int((time.time() - start_time) * 1000)
+            service_stats["total_response_time"] += elapsed_ms
+            
+            warning_msg = (
+                "Maaf, saya merupakan AI Assistant Ahli Hukum Konstitusi Indonesia. "
+                "Saya tidak dapat menjawab pertanyaan di luar konteks hukum yang Anda ajukan.\n\n"
+                "⚖️ **Keahlian saya meliputi:**\n"
+                "• Undang-Undang Dasar 1945\n"
+                "• Sistem ketatanegaraan Indonesia\n"
+                "• Hak dan kewajiban konstitusional\n"
+                "• Lembaga-lembaga negara\n"
+                "• Proses amandemen UUD 1945\n\n"
+                "💡 **Contoh pertanyaan yang dapat saya bantu jawab:**\n"
+                "• \"Apa isi pembukaan UUD 1945?\"\n"
+                "• \"Bagaimana checks and balances dalam UUD 1945?\"\n"
+                "• \"Apa saja hak asasi manusia yang dijamin konstitusi?\""
+            )
+            
+            return QueryResponse(
+                answer=warning_msg,
+                system="legal_context_filter",
+                accuracy=0.0,
+                response_time=elapsed_ms,
+                sources=[],
+                gemini_model="context_validator",
+                cached=False,
+                fallback=True
+            )
+            
+        # 3. Route to Native RAG
+        if actual_rag_type == "native":
+            if not native_rag:
+                raise HTTPException(status_code=503, detail="Native RAG system is not initialized/available")
+                
+            # Swap model dynamically
+            native_rag.model = genai.GenerativeModel(selected_model)
+            
+            # Execute query
+            result = native_rag.answer_question_document_by_document(question)
+            
+            if isinstance(result, str):
+                raise Exception(f"Native RAG processing error: {result}")
+                
+            answer = result.get('answer', '')
+            
+            # Extract source references
+            sources = []
+            for doc_ans in result.get('individual_answers', []):
+                content = doc_ans['answer']
+                pasal_val = None
+                ayat_val = None
+                pasal_match = re.search(r'[Pp]asal\s+(\d+)', content)
+                if pasal_match:
+                    pasal_val = int(pasal_match.group(1))
+                ayat_match = re.search(r'[Aa]yat\s*\(?(\d+)\)?', content)
+                if ayat_match:
+                    ayat_val = int(ayat_match.group(1))
+                    
+                if pasal_val is not None and ayat_val is not None:
+                    pasal_ayat = f"Pasal {pasal_val} Ayat {ayat_val}"
+                elif pasal_val is not None:
+                    pasal_ayat = f"Pasal {pasal_val}"
+                else:
+                    pasal_ayat = doc_ans['source']
+                    
+                sources.append(SourceReference(
+                    pasal_ayat=pasal_ayat,
+                    preview=content[:100] + ("..." if len(content) > 100 else ""),
+                    relevance_score=1.0,
+                    chunk_id=None
+                ))
+                
+            # Run citation validation
+            citation_val = validate_citation(answer)
+            if not citation_val["passed"]:
+                answer = citation_val["message"]
+                
+            elapsed_ms = int((time.time() - start_time) * 1000)
+            service_stats["total_response_time"] += elapsed_ms
+            
+            return QueryResponse(
+                answer=answer,
+                system="native",
+                accuracy=96.8,
+                response_time=elapsed_ms,
+                sources=sources,
+                gemini_model=selected_model,
+                cached=False,
+                fallback=False
+            )
+            
+        # 4. Route to LangChain RAG
+        elif actual_rag_type == "langchain":
+            if not langchain_rag:
+                raise HTTPException(status_code=503, detail="LangChain RAG system is not initialized/available")
+                
+            # Retrieve documents using enhanced search
+            retrieved_docs = langchain_rag.enhanced_constitutional_search(question, k=12)
+            
+            if not retrieved_docs:
+                retrieved_docs = langchain_rag.vectorstore.similarity_search(question, k=8)
+                
+            # Calculate relevance scores
+            relevance_scores = calculate_relevance_score(retrieved_docs, question)
+            
+            # Validate relevance threshold
+            threshold_val = validate_relevance_threshold(relevance_scores, question)
+            
+            if not threshold_val["passed"]:
+                elapsed_ms = int((time.time() - start_time) * 1000)
+                service_stats["total_response_time"] += elapsed_ms
+                return QueryResponse(
+                    answer=threshold_val["message"],
+                    system="langchain",
+                    accuracy=89.2,
+                    response_time=elapsed_ms,
+                    sources=[],
+                    gemini_model=selected_model,
+                    cached=False,
+                    fallback=True
+                )
+                
+            # Generate answer using selected model
+            context_text = "\n\n".join([doc.page_content for doc in retrieved_docs])
+            prompt_text = build_constitutional_prompt(context_text, question)
+            
+            model = genai.GenerativeModel(selected_model)
+            response = model.generate_content(prompt_text)
+            answer = response.text.strip()
+            
+            # Validate citations
+            citation_val = validate_citation(answer)
+            if not citation_val["passed"]:
+                answer = citation_val["message"]
+                
+            # Extract source references
+            sources = extract_source_references(retrieved_docs, relevance_scores)
+            
+            elapsed_ms = int((time.time() - start_time) * 1000)
+            service_stats["total_response_time"] += elapsed_ms
+            
+            return QueryResponse(
+                answer=answer,
+                system="langchain",
+                accuracy=89.2,
+                response_time=elapsed_ms,
+                sources=sources,
+                gemini_model=selected_model,
+                cached=False,
+                fallback=False
+            )
+            
+        else:
+            raise HTTPException(status_code=400, detail=f"Invalid RAG type selection: {rag_type}")
+            
+    except Exception as e:
+        service_stats["error_count"] += 1
+        print(f"❌ Error in /api/query endpoint: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc(file=sys.stderr)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Terjadi kesalahan internal saat memproses kueri: {str(e)}"
+        )
 
 
 def build_constitutional_prompt(context: str, question: str) -> str:
