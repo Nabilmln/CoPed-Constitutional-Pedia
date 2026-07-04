@@ -7,6 +7,8 @@ import os
 import sys
 import time
 import re
+import json
+import asyncio
 from datetime import datetime
 from typing import Optional, List, Literal
 from contextlib import asynccontextmanager
@@ -725,6 +727,292 @@ async def query_endpoint(request: QueryRequest):
             status_code=500,
             detail=f"Terjadi kesalahan internal saat memproses kueri: {str(e)}"
         )
+
+
+@app.post("/api/query/stream")
+async def query_stream_endpoint(request: QueryRequest):
+    """
+    POST endpoint for streaming RAG queries using SSE.
+    Streams tokens progressively from Gemini API, then sends metadata and completion events.
+    
+    SSE Event Format:
+        - event: token, data: {"token": "text chunk"}
+        - event: metadata, data: {"sources": [...], "response_time": 850, ...}
+        - event: complete, data: {"status": "done"}
+        - event: error, data: {"error": "message", "type": "ErrorType"}
+    
+    Requirements: 2.4, 7.1, 7.2, 7.3, 7.6, 7.7
+    """
+    return StreamingResponse(
+        generate_streaming_response(request),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no"  # Disable nginx buffering
+        }
+    )
+
+
+async def generate_streaming_response(request: QueryRequest):
+    """
+    Generate streaming response using SSE protocol.
+    
+    Yields SSE events:
+    - "token": individual response tokens as they're generated
+    - "metadata": final metadata (sources, timing, accuracy)
+    - "complete": end of stream
+    - "error": if exception occurs
+    
+    Requirements: 7.2, 7.3, 7.6, 7.7
+    """
+    global native_rag, langchain_rag, service_stats
+    
+    start_time = time.time()
+    service_stats["total_queries"] += 1
+    
+    try:
+        question = request.question.strip()
+        selected_model = request.model
+        rag_type = request.rag_type
+        
+        # 1. Handle auto selection
+        actual_rag_type = rag_type
+        if rag_type == "auto":
+            actual_rag_type = auto_select_rag(question)
+        
+        # 2. Check for legal context filter
+        if actual_rag_type == "legal_context_filter":
+            warning_msg = (
+                "Maaf, saya merupakan AI Assistant Ahli Hukum Konstitusi Indonesia. "
+                "Saya tidak dapat menjawab pertanyaan di luar konteks hukum yang Anda ajukan.\n\n"
+                "⚖️ **Keahlian saya meliputi:**\n"
+                "• Undang-Undang Dasar 1945\n"
+                "• Sistem ketatanegaraan Indonesia\n"
+                "• Hak dan kewajiban konstitusional\n"
+                "• Lembaga-lembaga negara\n"
+                "• Proses amandemen UUD 1945\n\n"
+                "💡 **Contoh pertanyaan yang dapat saya bantu jawab:**\n"
+                "• \"Apa isi pembukaan UUD 1945?\"\n"
+                "• \"Bagaimana checks and balances dalam UUD 1945?\"\n"
+                "• \"Apa saja hak asasi manusia yang dijamin konstitusi?\""
+            )
+            
+            # Stream the warning message as a single token
+            yield format_sse_event("token", {"token": warning_msg})
+            await asyncio.sleep(0)
+            
+            # Send metadata
+            elapsed_ms = int((time.time() - start_time) * 1000)
+            service_stats["total_response_time"] += elapsed_ms
+            
+            metadata = {
+                "sources": [],
+                "response_time": elapsed_ms,
+                "system": "legal_context_filter",
+                "model": "context_validator",
+                "accuracy": 0.0
+            }
+            yield format_sse_event("metadata", metadata)
+            
+            # Send complete event
+            yield format_sse_event("complete", {"status": "done"})
+            return
+        
+        # 3. Retrieve context documents
+        retrieved_docs = []
+        system_name = actual_rag_type
+        
+        if actual_rag_type == "native":
+            if not native_rag:
+                raise HTTPException(status_code=503, detail="Native RAG system not available")
+            
+            # Native RAG uses its own document retrieval internally
+            # We'll stream directly from its answer generation
+            pass
+            
+        elif actual_rag_type == "langchain":
+            if not langchain_rag:
+                raise HTTPException(status_code=503, detail="LangChain RAG system not available")
+            
+            # Retrieve documents using enhanced search
+            retrieved_docs = langchain_rag.enhanced_constitutional_search(question, k=12)
+            if not retrieved_docs:
+                retrieved_docs = langchain_rag.vectorstore.similarity_search(question, k=8)
+        
+        # 4. For LangChain, validate relevance and build prompt
+        if actual_rag_type == "langchain":
+            # Calculate relevance scores
+            relevance_scores = calculate_relevance_score(retrieved_docs, question)
+            
+            # Validate relevance threshold
+            threshold_val = validate_relevance_threshold(relevance_scores, question)
+            
+            if not threshold_val["passed"]:
+                # Stream not-found message
+                yield format_sse_event("token", {"token": threshold_val["message"]})
+                await asyncio.sleep(0)
+                
+                elapsed_ms = int((time.time() - start_time) * 1000)
+                service_stats["total_response_time"] += elapsed_ms
+                
+                metadata = {
+                    "sources": [],
+                    "response_time": elapsed_ms,
+                    "system": "langchain",
+                    "model": selected_model,
+                    "accuracy": 89.2,
+                    "relevance_score": relevance_scores.get("highest_relevance", 0.0)
+                }
+                yield format_sse_event("metadata", metadata)
+                yield format_sse_event("complete", {"status": "done"})
+                return
+            
+            # Build prompt
+            context_text = "\n\n".join([doc.page_content for doc in retrieved_docs])
+            prompt_text = build_constitutional_prompt(context_text, question)
+            
+            # Stream tokens from Gemini
+            model = genai.GenerativeModel(selected_model)
+            response_stream = model.generate_content_stream(prompt_text)
+            
+            full_answer = ""
+            for chunk in response_stream:
+                if chunk.text:
+                    full_answer += chunk.text
+                    # Yield token event
+                    yield format_sse_event("token", {"token": chunk.text})
+                    await asyncio.sleep(0)  # Allow other tasks to run
+            
+            # Validate citations
+            citation_val = validate_citation(full_answer)
+            if not citation_val["passed"]:
+                # If no citations, send correction message as additional token
+                correction_msg = "\n\n" + citation_val["message"]
+                yield format_sse_event("token", {"token": correction_msg})
+                full_answer += correction_msg
+            
+            # Extract source references
+            sources = extract_source_references(retrieved_docs, relevance_scores)
+            
+            # Calculate metrics
+            elapsed_ms = int((time.time() - start_time) * 1000)
+            service_stats["total_response_time"] += elapsed_ms
+            
+            # Send metadata event
+            metadata = {
+                "sources": [s.dict() for s in sources],
+                "response_time": elapsed_ms,
+                "system": "langchain",
+                "model": selected_model,
+                "accuracy": 89.2,
+                "relevance_score": relevance_scores.get("highest_relevance", 0.0)
+            }
+            yield format_sse_event("metadata", metadata)
+            
+        elif actual_rag_type == "native":
+            # Native RAG: we need to generate streaming response
+            # Since native_rag doesn't have streaming built in, we'll simulate it
+            # by retrieving answer and streaming it word by word
+            
+            # Swap model dynamically
+            native_rag.model = genai.GenerativeModel(selected_model)
+            
+            # Get the full response (native RAG doesn't support streaming yet)
+            # We'll need to enhance this in the future
+            result = native_rag.answer_question_document_by_document(question)
+            
+            if isinstance(result, str):
+                raise Exception(f"Native RAG processing error: {result}")
+            
+            answer = result.get('answer', '')
+            
+            # Stream answer word by word for better UX
+            words = answer.split(' ')
+            for i, word in enumerate(words):
+                token = word if i == 0 else ' ' + word
+                yield format_sse_event("token", {"token": token})
+                await asyncio.sleep(0.01)  # Small delay for streaming effect
+            
+            # Extract source references
+            sources = []
+            for doc_ans in result.get('individual_answers', []):
+                content = doc_ans['answer']
+                pasal_val = None
+                ayat_val = None
+                pasal_match = re.search(r'[Pp]asal\s+(\d+)', content)
+                if pasal_match:
+                    pasal_val = int(pasal_match.group(1))
+                ayat_match = re.search(r'[Aa]yat\s*\(?(\d+)\)?', content)
+                if ayat_match:
+                    ayat_val = int(ayat_match.group(1))
+                
+                if pasal_val is not None and ayat_val is not None:
+                    pasal_ayat = f"Pasal {pasal_val} Ayat {ayat_val}"
+                elif pasal_val is not None:
+                    pasal_ayat = f"Pasal {pasal_val}"
+                else:
+                    pasal_ayat = doc_ans['source']
+                
+                sources.append(SourceReference(
+                    pasal_ayat=pasal_ayat,
+                    preview=content[:100] + ("..." if len(content) > 100 else ""),
+                    relevance_score=1.0,
+                    chunk_id=None
+                ))
+            
+            # Calculate metrics
+            elapsed_ms = int((time.time() - start_time) * 1000)
+            service_stats["total_response_time"] += elapsed_ms
+            
+            # Send metadata event
+            metadata = {
+                "sources": [s.dict() for s in sources],
+                "response_time": elapsed_ms,
+                "system": "native",
+                "model": selected_model,
+                "accuracy": 96.8
+            }
+            yield format_sse_event("metadata", metadata)
+        
+        # Send complete event
+        yield format_sse_event("complete", {"status": "done"})
+        
+    except Exception as e:
+        service_stats["error_count"] += 1
+        print(f"❌ Error in streaming endpoint: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc(file=sys.stderr)
+        
+        # Yield error event
+        error_data = {
+            "error": str(e),
+            "type": type(e).__name__
+        }
+        yield format_sse_event("error", error_data)
+
+
+def format_sse_event(event_type: str, data: dict) -> str:
+    """
+    Format SSE event according to Server-Sent Events protocol.
+    
+    SSE Format:
+        event: {event_type}
+        data: {json_data}
+        
+        (double newline to separate events)
+    
+    Args:
+        event_type (str): Event type (token, metadata, complete, error)
+        data (dict): Event data to be JSON-serialized
+    
+    Returns:
+        str: Formatted SSE event string
+    
+    Requirements: 7.2, 7.5
+    """
+    json_data = json.dumps(data)
+    return f"event: {event_type}\ndata: {json_data}\n\n"
 
 
 def build_constitutional_prompt(context: str, question: str) -> str:
