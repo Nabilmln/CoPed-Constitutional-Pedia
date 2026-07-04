@@ -362,27 +362,35 @@ async def health_check():
     """
     Health check endpoint with service metrics.
     
+    Returns HTTP 200 for "healthy" status when all systems operational.
+    Returns HTTP 503 for "degraded" status when subsystems unavailable.
+    
+    Requirements: 2.5, 17.1, 17.2, 17.3, 17.4, 17.7, 17.8
+    
     Returns:
         HealthResponse: Service health status and metrics
     """
-    # Calculate uptime
+    # Calculate uptime from startup timestamp
     uptime = int(time.time() - service_stats["uptime_start"])
     
-    # Calculate average response time
+    # Calculate average response time from statistics
     avg_response_time = (
         service_stats["total_response_time"] / service_stats["total_queries"]
         if service_stats["total_queries"] > 0
         else 0.0
     )
     
-    # Check subsystem health
+    # Test Gemini API connectivity
+    gemini_ok = test_gemini_api()
+    
+    # Check ChromaDB vector database connection status
     vector_db_ok = langchain_rag is not None and hasattr(langchain_rag, 'vectorstore') and langchain_rag.vectorstore is not None
-    gemini_ok = test_gemini_api_connection()
     
     # Determine overall status
     status = "healthy" if (vector_db_ok and gemini_ok) else "degraded"
     
-    return HealthResponse(
+    # Build response
+    response_data = HealthResponse(
         status=status,
         uptime=uptime,
         total_queries=service_stats["total_queries"],
@@ -391,6 +399,17 @@ async def health_check():
         vector_db_status=vector_db_ok,
         gemini_api_status=gemini_ok
     )
+    
+    # Return HTTP 200 "healthy" when all systems operational
+    # Return HTTP 503 "degraded" when subsystems unavailable
+    if status == "degraded":
+        from fastapi.responses import JSONResponse
+        return JSONResponse(
+            status_code=503,
+            content=response_data.dict()
+        )
+    
+    return response_data
 
 
 # =============================================================================
@@ -1320,9 +1339,15 @@ def validate_citation(response_text: str) -> dict:
     }
 
 
-def test_gemini_api_connection() -> bool:
+def test_gemini_api() -> bool:
     """
-    Test if Gemini API is accessible.
+    Test Gemini API connectivity with a minimal test request.
+    
+    Sends test request to Gemini API.
+    Returns True if successful, False otherwise.
+    Catches and suppresses exceptions.
+    
+    Requirements: 17.8
     
     Returns:
         bool: True if API is accessible, False otherwise
@@ -1331,10 +1356,13 @@ def test_gemini_api_connection() -> bool:
         return False
     
     try:
+        # Send minimal test request to Gemini API
         model = genai.GenerativeModel("gemini-1.5-flash")
         response = model.generate_content("Test")
+        # Return True if successful
         return bool(response.text)
     except Exception as e:
+        # Catch and suppress exceptions
         print(f"⚠️ Gemini API connection test failed: {e}", file=sys.stderr)
         return False
 
