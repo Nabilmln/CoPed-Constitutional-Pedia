@@ -1,11 +1,198 @@
 const fs = require("fs");
 const path = require("path");
 const { spawn } = require("child_process");
+const axios = require("axios");
+const http = require("http");
+const crypto = require("crypto");
+const { LRUCache } = require("lru-cache");
+
+// Configure axios with keep-alive connection pool for FastAPI service
+const axiosInstance = axios.create({
+  baseURL: process.env.PYTHON_SERVICE_URL || "http://localhost:5001",
+  timeout: 30000, // 30 second timeout
+  headers: {
+    "Content-Type": "application/json",
+  },
+  // Enable HTTP keep-alive for connection reuse
+  httpAgent: new http.Agent({
+    keepAlive: true,
+    keepAliveMsecs: 1000,
+    maxSockets: 20,
+    maxFreeSockets: 10,
+  }),
+});
+
+// Add response interceptor for error logging
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.error("FastAPI request failed:", error.message);
+    if (error.response) {
+      console.error("Response status:", error.response.status);
+      console.error("Response data:", error.response.data);
+    } else if (error.request) {
+      console.error("No response received from FastAPI service");
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Configure LRU cache
+const queryCache = new LRUCache({
+  max: parseInt(process.env.CACHE_MAX_SIZE) || 100,
+  ttl: (parseInt(process.env.CACHE_TTL) || 3600) * 1000, // Convert seconds to milliseconds
+  updateAgeOnGet: true, // Reset TTL on cache hit
+  allowStale: false,
+});
+
+// Cache statistics
+const cacheStats = {
+  hits: 0,
+  misses: 0,
+  size: () => queryCache.size,
+};
+
+// Cache key generator using MD5 hash
+function getCacheKey(question, ragType, model) {
+  const data = `${question}|${ragType}|${model}`;
+  return crypto.createHash("md5").update(data).digest("hex");
+}
 
 class GeminiService {
   constructor() {
     this.pythonPath = "python"; // atau 'python3' di Linux/Mac
     this.ragSelectorPath = path.join(__dirname, "../gemini API/api_bridge.py");
+  }
+
+  /**
+   * Query with cache integration
+   * Checks cache before calling FastAPI service
+   * @param {string} question - The question to ask
+   * @param {string} ragType - RAG system type: 'native', 'langchain', or 'auto'
+   * @param {string} model - Gemini model to use
+   * @param {string} userId - Optional user identifier
+   * @returns {Promise<Object>} Query response with cached flag
+   */
+  async queryWithCache(question, ragType = "auto", model = "gemini-1.5-flash", userId = "anonymous") {
+    const startTime = Date.now();
+
+    // Generate cache key
+    const cacheKey = getCacheKey(question, ragType, model);
+
+    // Check cache
+    const cachedResult = queryCache.get(cacheKey);
+    if (cachedResult) {
+      cacheStats.hits++;
+      console.log(`✅ Cache hit for key: ${cacheKey.substring(0, 8)}...`);
+
+      return {
+        ...cachedResult,
+        cached: true,
+        response_time: Date.now() - startTime,
+      };
+    }
+
+    cacheStats.misses++;
+    console.log(`❌ Cache miss for key: ${cacheKey.substring(0, 8)}...`);
+
+    // Call FastAPI service
+    try {
+      const response = await axiosInstance.post("/api/query", {
+        question,
+        rag_type: ragType,
+        model,
+      });
+
+      const result = response.data;
+      result.cached = false;
+      result.response_time = Date.now() - startTime;
+
+      // Store in cache
+      queryCache.set(cacheKey, result);
+
+      return result;
+    } catch (error) {
+      console.error("FastAPI service error:", error.message);
+
+      // Fallback to direct Gemini API
+      return await this.fallbackDirectGemini(question, model, userId);
+    }
+  }
+
+  /**
+   * Get streaming query URL for SSE
+   * @param {string} question - The question to ask
+   * @param {string} ragType - RAG system type
+   * @param {string} model - Gemini model to use
+   * @returns {Promise<Object>} Object containing stream URL
+   */
+  async queryStream(question, ragType = "auto", model = "gemini-1.5-flash") {
+    const params = new URLSearchParams({
+      question,
+      rag_type: ragType,
+      model,
+    });
+
+    const url = `${axiosInstance.defaults.baseURL}/api/query/stream?${params}`;
+
+    // Return EventSource URL for frontend
+    return { streamUrl: url };
+  }
+
+  /**
+   * Fallback to direct Gemini API when FastAPI is unavailable
+   * @param {string} question - The question to ask
+   * @param {string} model - Gemini model to use
+   * @param {string} userId - User identifier
+   * @returns {Promise<Object>} Fallback response
+   */
+  async fallbackDirectGemini(question, model, userId) {
+    console.log("⚠️ Using fallback: Direct Gemini API");
+
+    try {
+      const { GoogleGenerativeAI } = require("@google/generative-ai");
+      const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+      const geminiModel = genAI.getGenerativeModel({ model });
+
+      const prompt = `Pertanyaan tentang UUD 1945: ${question}`;
+      const result = await geminiModel.generateContent(prompt);
+      const response = await result.response;
+
+      return {
+        answer: response.text(),
+        system: "fallback_direct",
+        accuracy: 75.0,
+        response_time: 0,
+        sources: [],
+        gemini_model: model,
+        fallback: true,
+        cached: false,
+        note: "Respons fallback karena FastAPI service tidak tersedia",
+      };
+    } catch (error) {
+      console.error("Fallback also failed:", error.message);
+      throw new Error("Both FastAPI and fallback Gemini API failed");
+    }
+  }
+
+  /**
+   * Get cache statistics
+   * @returns {Object} Cache statistics including hit rate
+   */
+  getCacheStats() {
+    const totalRequests = cacheStats.hits + cacheStats.misses;
+    const hitRate =
+      totalRequests > 0
+        ? ((cacheStats.hits / totalRequests) * 100).toFixed(2)
+        : 0;
+
+    return {
+      hits: cacheStats.hits,
+      misses: cacheStats.misses,
+      size: cacheStats.size(),
+      hit_rate: `${hitRate}%`,
+      total_requests: totalRequests,
+    };
   }
 
   // Call Native RAG System
