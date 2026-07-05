@@ -5,6 +5,8 @@ const axios = require("axios");
 const http = require("http");
 const crypto = require("crypto");
 const { LRUCache } = require("lru-cache");
+const healthMonitor = require("./healthMonitor");
+const logger = require("./logger");
 
 // Configure axios with keep-alive connection pool for FastAPI service
 const axiosInstance = axios.create({
@@ -71,10 +73,22 @@ class GeminiService {
    * @param {string} ragType - RAG system type: 'native', 'langchain', or 'auto'
    * @param {string} model - Gemini model to use
    * @param {string} userId - Optional user identifier
+   * @param {string} clientIP - Client IP address for logging
    * @returns {Promise<Object>} Query response with cached flag
    */
-  async queryWithCache(question, ragType = "auto", model = "gemini-1.5-flash", userId = "anonymous") {
+  async queryWithCache(question, ragType = "auto", model = "gemini-1.5-flash", userId = "anonymous", clientIP = "unknown") {
     const startTime = Date.now();
+    const queryId = crypto.randomBytes(8).toString('hex');
+
+    // Log incoming query (Requirements: 19.2)
+    logger.logQuery({
+      question,
+      ragType,
+      model,
+      clientIP,
+      userId,
+      queryId,
+    });
 
     // Generate cache key
     const cacheKey = getCacheKey(question, ragType, model);
@@ -83,17 +97,41 @@ class GeminiService {
     const cachedResult = queryCache.get(cacheKey);
     if (cachedResult) {
       cacheStats.hits++;
-      console.log(`✅ Cache hit for key: ${cacheKey.substring(0, 8)}...`);
+      logger.info('CacheManager', 'Cache hit', {
+        cacheKey: cacheKey.substring(0, 8) + '...',
+        queryId,
+      });
 
-      return {
+      const response = {
         ...cachedResult,
         cached: true,
         response_time: Date.now() - startTime,
       };
+
+      // Log response (Requirements: 19.3)
+      logger.logResponse({
+        queryId,
+        responseTime: response.response_time,
+        cacheHit: true,
+        success: true,
+        system: response.system,
+        accuracy: response.accuracy,
+      });
+
+      return response;
     }
 
     cacheStats.misses++;
-    console.log(`❌ Cache miss for key: ${cacheKey.substring(0, 8)}...`);
+    logger.info('CacheManager', 'Cache miss', {
+      cacheKey: cacheKey.substring(0, 8) + '...',
+      queryId,
+    });
+
+    // Check if in fallback mode
+    if (healthMonitor.isInFallback()) {
+      logger.warn('QueryHandler', 'System in fallback mode, using direct Gemini API', { queryId });
+      return await this.fallbackDirectGemini(question, model, userId, queryId);
+    }
 
     // Call FastAPI service
     try {
@@ -110,12 +148,27 @@ class GeminiService {
       // Store in cache
       queryCache.set(cacheKey, result);
 
+      // Log response (Requirements: 19.3)
+      logger.logResponse({
+        queryId,
+        responseTime: result.response_time,
+        cacheHit: false,
+        success: true,
+        system: result.system,
+        accuracy: result.accuracy,
+      });
+
       return result;
     } catch (error) {
-      console.error("FastAPI service error:", error.message);
+      // Log error (Requirements: 19.6)
+      logger.logError(error, {
+        component: 'QueryHandler',
+        queryId,
+        question: question.substring(0, 50) + '...',
+      });
 
       // Fallback to direct Gemini API
-      return await this.fallbackDirectGemini(question, model, userId);
+      return await this.fallbackDirectGemini(question, model, userId, queryId);
     }
   }
 
@@ -144,10 +197,11 @@ class GeminiService {
    * @param {string} question - The question to ask
    * @param {string} model - Gemini model to use
    * @param {string} userId - User identifier
+   * @param {string} queryId - Query identifier for logging
    * @returns {Promise<Object>} Fallback response
    */
-  async fallbackDirectGemini(question, model, userId) {
-    console.log("⚠️ Using fallback: Direct Gemini API");
+  async fallbackDirectGemini(question, model, userId, queryId = null) {
+    logger.warn('FallbackHandler', 'Using fallback: Direct Gemini API', { queryId });
 
     try {
       const { GoogleGenerativeAI } = require("@google/generative-ai");
@@ -158,7 +212,7 @@ class GeminiService {
       const result = await geminiModel.generateContent(prompt);
       const response = await result.response;
 
-      return {
+      const fallbackResponse = {
         answer: response.text(),
         system: "fallback_direct",
         accuracy: 75.0,
@@ -169,8 +223,19 @@ class GeminiService {
         cached: false,
         note: "Respons fallback karena FastAPI service tidak tersedia",
       };
+
+      logger.info('FallbackHandler', 'Fallback successful', {
+        queryId,
+        answerLength: fallbackResponse.answer.length,
+      });
+
+      return fallbackResponse;
     } catch (error) {
-      console.error("Fallback also failed:", error.message);
+      logger.logError(error, {
+        component: 'FallbackHandler',
+        queryId,
+        message: 'Fallback also failed',
+      });
       throw new Error("Both FastAPI and fallback Gemini API failed");
     }
   }

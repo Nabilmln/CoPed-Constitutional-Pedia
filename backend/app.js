@@ -1,6 +1,11 @@
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
 require("dotenv").config();
+
+// Import services
+const healthMonitor = require("./services/healthMonitor");
+const logger = require("./services/logger");
 
 // Import routes
 const chatRoute = require("./routes/chatRoutes");
@@ -8,6 +13,21 @@ const chatRoute = require("./routes/chatRoutes");
 const app = express();
 
 // MIDDLEWARE
+
+// Security headers with helmet middleware
+// Requirements: 16.3, 16.4, 16.5, 16.6, 16.7
+app.use(
+  helmet({
+    contentSecurityPolicy: false, // Allow frontend to work
+    xContentTypeOptions: true, // X-Content-Type-Options: nosniff
+    frameguard: { action: "deny" }, // X-Frame-Options: DENY
+    xssFilter: true, // X-XSS-Protection: 1; mode=block
+    hsts: {
+      maxAge: 31536000, // Strict-Transport-Security: max-age=31536000
+      includeSubDomains: true,
+    },
+  })
+);
 
 // CORS configuration
 app.use(
@@ -27,7 +47,11 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // Request logging middleware
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  const clientIP = req.ip || req.connection.remoteAddress;
+  logger.info('RequestHandler', `${req.method} ${req.path}`, {
+    clientIP,
+    userAgent: req.get('user-agent'),
+  });
   next();
 });
 
@@ -54,14 +78,22 @@ app.get("/", (req, res) => {
 app.use("/api/chat", chatRoute);
 
 // Health check endpoint
-app.get("/api/health", (req, res) => {
+app.get("/api/health", async (req, res) => {
+  const healthStatus = healthMonitor.getStatus();
+  
   res.json({
     success: true,
     message: "Server is healthy",
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     memory: process.memoryUsage(),
-    status: "No Authentication Required",
+    healthMonitor: {
+      fastAPIStatus: healthStatus.isInFallbackMode ? 'unhealthy' : 'healthy',
+      isInFallbackMode: healthStatus.isInFallbackMode,
+      consecutiveFailures: healthStatus.consecutiveFailures,
+      lastHealthCheck: healthStatus.lastHealthCheckTime,
+      stats: healthStatus.stats,
+    },
   });
 });
 
@@ -86,7 +118,12 @@ app.use("*", (req, res) => {
 
 // Global error handler
 app.use((err, req, res, next) => {
-  console.error("🔴 Error:", err.stack);
+  // Log error with stack trace (Requirements: 19.6)
+  logger.logError(err, {
+    component: 'GlobalErrorHandler',
+    path: req.path,
+    method: req.method,
+  });
 
   // Default error
   res.status(err.statusCode || 500).json({
@@ -106,6 +143,12 @@ const startServer = async () => {
     const PORT = process.env.PORT || 5000;
 
     app.listen(PORT, () => {
+      logger.info('Server', 'CoPed Backend Server Started', {
+        port: PORT,
+        environment: process.env.NODE_ENV || 'development',
+        pythonServiceUrl: process.env.PYTHON_SERVICE_URL || 'http://localhost:5001',
+      });
+
       console.log("🚀 ================================");
       console.log(`🚀 CoPed Backend Server Started!`);
       console.log(`🌐 Server running on port ${PORT}`);
@@ -115,23 +158,55 @@ const startServer = async () => {
       console.log(`✅ Authentication: DISABLED`);
       console.log(`💾 Storage: In-Memory (session-based)`);
       console.log("🚀 ================================");
+
+      // Start health monitoring (Requirements: 17.5, 17.6)
+      logger.info('Server', 'Starting health monitor');
+      healthMonitor.start();
     });
   } catch (error) {
-    console.error("❌ Failed to start server:", error.message);
+    logger.logError(error, {
+      component: 'Server',
+      message: 'Failed to start server',
+    });
     process.exit(1);
   }
 };
 
 // Handle unhandled promise rejections
 process.on("unhandledRejection", (err, promise) => {
-  console.error("🔴 Unhandled Promise Rejection:", err.message);
+  logger.critical('Process', 'Unhandled Promise Rejection', {
+    error: err.message,
+    stack: err.stack,
+  });
+  
+  // Stop health monitor before exit
+  healthMonitor.stop();
   process.exit(1);
 });
 
 // Handle uncaught exceptions
 process.on("uncaughtException", (err) => {
-  console.error("🔴 Uncaught Exception:", err.message);
+  logger.critical('Process', 'Uncaught Exception', {
+    error: err.message,
+    stack: err.stack,
+  });
+  
+  // Stop health monitor before exit
+  healthMonitor.stop();
   process.exit(1);
+});
+
+// Handle graceful shutdown
+process.on("SIGTERM", () => {
+  logger.info('Process', 'SIGTERM received, shutting down gracefully');
+  healthMonitor.stop();
+  process.exit(0);
+});
+
+process.on("SIGINT", () => {
+  logger.info('Process', 'SIGINT received, shutting down gracefully');
+  healthMonitor.stop();
+  process.exit(0);
 });
 
 // Start the server
