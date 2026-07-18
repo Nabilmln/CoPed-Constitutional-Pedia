@@ -525,7 +525,6 @@ export default function CopedExperience() {
 
         <div className="testimonial-showcase" aria-label="Testimoni pengguna">
           <div className="testimonial-heading">
-            <span>Impresi pengguna</span>
             <strong>Apa kata mereka?</strong>
           </div>
           <div className="testimonial-wheel">

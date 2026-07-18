@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "CoPed — Tanya UUD 1945",
+  title: "CoPed",
   description:
     "Platform edukasi UUD 1945 dengan pencarian dokumen dan jawaban AI yang grounded.",
   icons: {
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     apple: "/coped-logo-black-circle.png",
   },
   openGraph: {
-    title: "CoPed — Tanya UUD 1945",
+    title: "CoPed",
     description:
       "Pahami UUD 1945 melalui percakapan berbasis dokumen dan rujukan pasal.",
     locale: "id_ID",
