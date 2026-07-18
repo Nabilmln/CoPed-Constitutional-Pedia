@@ -36,8 +36,20 @@ const embeddingEnvSchema = z.object({
 
 export type EmbeddingEnv = z.infer<typeof embeddingEnvSchema>;
 
+const ragEnvSchema = z.object({
+  RAG_MATCH_COUNT: z.coerce.number().int().min(1).max(20).default(5),
+  RAG_SIMILARITY_THRESHOLD: z.coerce
+    .number()
+    .min(-1)
+    .max(1)
+    .default(0.3),
+});
+
+export type RagEnv = z.infer<typeof ragEnvSchema>;
+
 let cachedDatabaseEnv: DatabaseEnv | undefined;
 let cachedEmbeddingEnv: EmbeddingEnv | undefined;
+let cachedRagEnv: RagEnv | undefined;
 
 export const getDatabaseEnv = (): DatabaseEnv => {
   if (cachedDatabaseEnv) {
@@ -75,4 +87,23 @@ export const getEmbeddingEnv = (): EmbeddingEnv => {
 
   cachedEmbeddingEnv = result.data;
   return cachedEmbeddingEnv;
+};
+
+export const getRagEnv = (): RagEnv => {
+  if (cachedRagEnv) {
+    return cachedRagEnv;
+  }
+
+  const result = ragEnvSchema.safeParse(process.env);
+
+  if (!result.success) {
+    const details = result.error.issues
+      .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
+      .join("; ");
+
+    throw new Error(`Invalid RAG environment: ${details}`);
+  }
+
+  cachedRagEnv = result.data;
+  return cachedRagEnv;
 };

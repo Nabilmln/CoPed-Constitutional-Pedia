@@ -82,5 +82,6 @@ as reviewed migration files.
 
 The Next.js database foundation, Node.js UUD ingestion pipeline, and Gemini
 embedding pipeline are available. See `docs/UUD_INGESTION.md` and
-`docs/GEMINI_EMBEDDING.md`. Retrieval and the RAG API are introduced in
-subsequent phases.
+`docs/GEMINI_EMBEDDING.md`. Hybrid retrieval is documented in
+`docs/HYBRID_RETRIEVAL.md`; the answer-generation API is introduced in the
+next phase.

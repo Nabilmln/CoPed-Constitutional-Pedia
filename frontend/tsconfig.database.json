@@ -10,7 +10,8 @@
     "src/server/config/**/*.ts",
     "src/server/database/**/*.ts",
     "src/server/documents/**/*.ts",
-    "src/server/embeddings/**/*.ts"
+    "src/server/embeddings/**/*.ts",
+    "src/server/retrieval/**/*.ts"
   ],
   "exclude": ["node_modules"]
 }

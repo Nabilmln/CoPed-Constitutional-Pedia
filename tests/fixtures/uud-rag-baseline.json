@@ -38,7 +38,7 @@
     "type": "conceptual",
     "question": "Apa hak warga negara terkait pendidikan?",
     "expected_articles": ["31"],
-    "expected_keywords": ["pendidikan"],
+    "expected_keywords": ["pengajaran"],
     "should_answer": true
   },
   {
