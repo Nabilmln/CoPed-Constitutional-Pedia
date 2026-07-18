@@ -23,6 +23,9 @@ class HealthMonitor {
     this.maxFailuresBeforeFallback = 3;
     this.isInFallbackMode = false;
     this.intervalId = null;
+    this.abortController = null;
+    this.isCheckInFlight = false;
+    this.isRunning = false;
     this.lastHealthCheckTime = null;
     this.lastHealthStatus = null;
     
@@ -53,12 +56,14 @@ class HealthMonitor {
       fastAPIUrl: this.fastAPIUrl,
     });
 
+    this.isRunning = true;
+
     // Perform initial health check immediately
-    this.performHealthCheck();
+    void this.performScheduledHealthCheck();
 
     // Start periodic checks
     this.intervalId = setInterval(() => {
-      this.performHealthCheck();
+      void this.performScheduledHealthCheck();
     }, this.healthCheckInterval);
   }
 
@@ -66,17 +71,52 @@ class HealthMonitor {
    * Stop periodic health monitoring
    */
   stop() {
+    this.isRunning = false;
+
     if (this.intervalId) {
       clearInterval(this.intervalId);
       this.intervalId = null;
-      this.log('info', 'Health monitor stopped');
+    }
+
+    if (this.abortController) {
+      this.abortController.abort();
+      this.abortController = null;
+    }
+
+    this.log('info', 'Health monitor stopped');
+  }
+
+  /**
+   * Run a lifecycle-managed check without allowing overlapping requests.
+   */
+  async performScheduledHealthCheck() {
+    if (!this.isRunning || this.isCheckInFlight) {
+      return;
+    }
+
+    this.isCheckInFlight = true;
+    const controller = new AbortController();
+    this.abortController = controller;
+
+    try {
+      await this.performHealthCheck({
+        signal: controller.signal,
+        ignoreCancellation: true,
+      });
+    } finally {
+      if (this.abortController === controller) {
+        this.abortController = null;
+      }
+      this.isCheckInFlight = false;
     }
   }
 
   /**
    * Perform a single health check
    */
-  async performHealthCheck() {
+  async performHealthCheck(options = {}) {
+    const { signal, ignoreCancellation = false } = options;
+
     this.stats.totalChecks++;
     this.lastHealthCheckTime = new Date().toISOString();
 
@@ -84,7 +124,12 @@ class HealthMonitor {
       const startTime = Date.now();
       const response = await axios.get(`${this.fastAPIUrl}/health`, {
         timeout: 5000, // 5 second timeout for health checks
+        signal,
       });
+
+      if (ignoreCancellation && (!this.isRunning || signal?.aborted)) {
+        return;
+      }
 
       const responseTime = Date.now() - startTime;
       this.lastHealthStatus = response.data;
@@ -92,6 +137,13 @@ class HealthMonitor {
       // Health check succeeded
       this.handleHealthCheckSuccess(response.data, responseTime);
     } catch (error) {
+      if (
+        ignoreCancellation &&
+        (!this.isRunning || signal?.aborted || error.code === 'ERR_CANCELED')
+      ) {
+        return;
+      }
+
       // Health check failed
       this.handleHealthCheckFailure(error);
     }

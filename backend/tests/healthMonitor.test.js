@@ -245,6 +245,35 @@ describe('Health Monitor', () => {
       expect(healthMonitor.intervalId).toBeNull();
     });
 
+    test('should cancel an in-flight scheduled health check when stopped', async () => {
+      let capturedSignal;
+
+      axios.get.mockImplementation((url, options) => {
+        capturedSignal = options.signal;
+
+        return new Promise((resolve, reject) => {
+          options.signal.addEventListener('abort', () => {
+            const error = new Error('Request canceled');
+            error.code = 'ERR_CANCELED';
+            reject(error);
+          });
+        });
+      });
+
+      healthMonitor.start();
+      await Promise.resolve();
+
+      expect(capturedSignal).toBeDefined();
+      expect(capturedSignal.aborted).toBe(false);
+
+      healthMonitor.stop();
+      await Promise.resolve();
+
+      expect(capturedSignal.aborted).toBe(true);
+      expect(healthMonitor.isRunning).toBe(false);
+      expect(healthMonitor.intervalId).toBeNull();
+    });
+
     test('should not start if already running', () => {
       const logSpy = jest.spyOn(console, 'log').mockImplementation();
 
