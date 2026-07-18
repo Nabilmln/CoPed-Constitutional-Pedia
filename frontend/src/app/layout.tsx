@@ -1,11 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist } from "next/font/google";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "CoPed — Tanya UUD 1945",
@@ -39,7 +33,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id">
-      <body className={geistSans.variable}>{children}</body>
+      <body>{children}</body>
     </html>
   );
 }

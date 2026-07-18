@@ -8,3 +8,12 @@ npm install
 copy .env.example .env.local
 npm run dev
 ```
+
+Jika development server menampilkan asset lama setelah perubahan besar:
+
+```bash
+npm run dev:fresh
+```
+
+Command tersebut menghapus hanya cache generated `.next` lalu menjalankan
+server kembali. Untuk penggunaan normal, tetap gunakan `npm run dev`.

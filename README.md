@@ -43,6 +43,9 @@ npm run dev
 Buka `http://localhost:3000`. Jangan commit `.env.local`; semua API key hanya
 dibaca oleh server.
 
+Jika cache development tidak sinkron setelah perpindahan atau penghapusan
+route besar, gunakan `npm run dev:fresh` dari folder `frontend`.
+
 ## Quality gate
 
 ```bash
