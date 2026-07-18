@@ -68,6 +68,7 @@ Dokumentasi lengkap:
 - [RAG generation](docs/RAG_GENERATION.md)
 - [Chat API](docs/CHAT_API.md)
 - [Analytics dan feedback](docs/ANALYTICS_FEEDBACK_API.md)
+- [One-page UI](docs/ONE_PAGE_UI.md)
 - [Security audit](docs/BACKEND_SECURITY_AUDIT.md)
 
 ## Deployment
