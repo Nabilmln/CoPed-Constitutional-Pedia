@@ -46,7 +46,7 @@
     "type": "conceptual",
     "question": "Berapa lama masa jabatan Presiden menurut UUD 1945?",
     "expected_articles": ["7"],
-    "expected_keywords": ["lima tahun", "satu kali masa jabatan"],
+    "expected_keywords": ["lima tahun", "dapat dipilih kembali"],
     "should_answer": true
   },
   {

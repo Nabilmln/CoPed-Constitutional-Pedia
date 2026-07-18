@@ -103,7 +103,7 @@ export const documentChunks = pgTable(
     paragraphNumber: text("paragraph_number"),
     content: text("content").notNull(),
     tokenCount: integer("token_count"),
-    embedding: vector("embedding", { dimensions: 768 }).notNull(),
+    embedding: vector("embedding", { dimensions: 768 }),
     metadata: jsonb("metadata").$type<ChunkMetadata>(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()

@@ -6,8 +6,10 @@
   "include": [
     "next-env.d.ts",
     "drizzle.config.ts",
+    "scripts/**/*.ts",
     "src/server/config/**/*.ts",
-    "src/server/database/**/*.ts"
+    "src/server/database/**/*.ts",
+    "src/server/documents/**/*.ts"
   ],
   "exclude": ["node_modules"]
 }

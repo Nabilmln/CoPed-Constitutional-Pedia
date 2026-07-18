@@ -49,6 +49,10 @@ The initial migration:
 - creates `match_document_chunks` for cosine retrieval;
 - creates `get_public_stats` for aggregate public counters.
 
+The Phase 3 migration makes `document_chunks.embedding` nullable while chunks
+wait for the embedding provider. Continue with [UUD_INGESTION.md](./UUD_INGESTION.md)
+after applying migrations.
+
 ## 4. Verify the connection
 
 ```bash
@@ -76,7 +80,6 @@ as reviewed migration files.
 
 ## Current boundary
 
-Phase 2 defines database infrastructure only. It does not connect the legacy
-Express/Python backend to Neon and does not yet ingest UUD 1945. The Next.js
-repositories, ingestion script, embedding provider, and RAG API are introduced
-in subsequent phases.
+The Next.js database foundation and Node.js UUD ingestion pipeline are
+available. The embedding provider and RAG API are introduced in subsequent
+phases.
