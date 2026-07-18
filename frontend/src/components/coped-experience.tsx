@@ -1,6 +1,14 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import {
+  Fragment,
+  FormEvent,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 const SESSION_STORAGE_KEY = "copED_session_id";
 
@@ -118,6 +126,85 @@ const QuoteIcon = () => (
     <path d="M8.5 11H5a4 4 0 0 1 4-4v2a2 2 0 0 0-2 2v1h3v5H5v-5M18.5 11H15a4 4 0 0 1 4-4v2a2 2 0 0 0-2 2v1h3v5h-5v-5" />
   </svg>
 );
+
+const ChevronIcon = () => (
+  <svg aria-hidden="true" viewBox="0 0 24 24">
+    <path d="m8 10 4 4 4-4" />
+  </svg>
+);
+
+const renderInlineMarkdown = (text: string): ReactNode[] =>
+  text
+    .split(/(\*\*[^*]+\*\*)/g)
+    .filter(Boolean)
+    .map((part, index) =>
+      part.startsWith("**") && part.endsWith("**") ? (
+        <strong key={`${part}-${index}`}>{part.slice(2, -2)}</strong>
+      ) : (
+        <Fragment key={`${part}-${index}`}>{part}</Fragment>
+      ),
+    );
+
+const RichAnswer = ({ content }: { content: string }) => {
+  const lines = content
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const blocks: ReactNode[] = [];
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    const bulletMatch = line.match(/^(?:[-*•])\s+(.+)$/);
+    const numberedMatch = line.match(/^\d+[.)]\s+(.+)$/);
+
+    if (bulletMatch || numberedMatch) {
+      const ordered = Boolean(numberedMatch);
+      const items: string[] = [];
+
+      while (index < lines.length) {
+        const currentLine = lines[index];
+        const currentMatch = ordered
+          ? currentLine.match(/^\d+[.)]\s+(.+)$/)
+          : currentLine.match(/^(?:[-*•])\s+(.+)$/);
+
+        if (!currentMatch) {
+          index -= 1;
+          break;
+        }
+
+        items.push(currentMatch[1]);
+        index += 1;
+      }
+
+      const ListTag = ordered ? "ol" : "ul";
+      blocks.push(
+        <ListTag className="answer-list" key={`list-${blocks.length}`}>
+          {items.map((item, itemIndex) => (
+            <li key={`${item}-${itemIndex}`}>
+              {renderInlineMarkdown(item)}
+            </li>
+          ))}
+        </ListTag>,
+      );
+      continue;
+    }
+
+    const headingMatch = line.match(/^#{1,6}\s+(.+)$/);
+    blocks.push(
+      headingMatch ? (
+        <h4 key={`heading-${blocks.length}`}>
+          {renderInlineMarkdown(headingMatch[1])}
+        </h4>
+      ) : (
+        <p key={`paragraph-${blocks.length}`}>
+          {renderInlineMarkdown(line)}
+        </p>
+      ),
+    );
+  }
+
+  return <div className="answer-content">{blocks}</div>;
+};
 
 export default function CopedExperience() {
   const [sessionId, setSessionId] = useState<string>();
@@ -389,12 +476,19 @@ export default function CopedExperience() {
                   {message.role === "assistant" ? "CoPed" : "Kamu"}
                 </div>
                 <div className="message-bubble">
-                  <p>{message.content}</p>
+                  {message.role === "assistant" ? (
+                    <RichAnswer content={message.content} />
+                  ) : (
+                    <p>{message.content}</p>
+                  )}
                   {message.sources && message.sources.length > 0 ? (
                     <details className="sources">
                       <summary>
-                        <QuoteIcon />
-                        {message.sources.length} rujukan konstitusi
+                        <span>
+                          <QuoteIcon />
+                          {message.sources.length} rujukan konstitusi
+                        </span>
+                        <ChevronIcon />
                       </summary>
                       <div className="source-list">
                         {message.sources.map((source) => (
@@ -475,6 +569,15 @@ export default function CopedExperience() {
           {chatError ? <p className="sr-only">{chatError}</p> : null}
         </section>
       </section>
+
+      <aside className="bridge-banner" aria-label="Prinsip CoPed">
+        <span>01</span>
+        <p>
+          Bukan menggantikan konstitusi,
+          <strong> tetapi mendekatkan maknanya.</strong>
+        </p>
+        <div aria-hidden="true">CoPed · UUD 1945</div>
+      </aside>
 
       <section className="voice-section" id="suara-kamu">
         <div className="voice-intro">

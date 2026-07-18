@@ -78,7 +78,7 @@ svg {
   width: min(100% - 3rem, 90rem);
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  padding: 1.4rem 0;
+  padding: 1rem 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.13);
   color: white;
   transform: translateX(-50%);
@@ -92,7 +92,7 @@ svg {
 
 .brand img {
   width: auto;
-  height: 2rem;
+  height: 1.55rem;
   object-fit: contain;
 }
 
@@ -127,8 +127,10 @@ svg {
 
 .hero-section {
   display: grid;
+  height: 100svh;
   min-height: 100svh;
   grid-template-columns: minmax(0, 1fr) minmax(28rem, 0.78fr);
+  overflow: hidden;
   background:
     linear-gradient(105deg, rgba(0, 0, 0, 0.82), rgba(0, 0, 0, 0.43)),
     radial-gradient(circle at 20% 18%, #7c3a20 0, transparent 34rem),
@@ -140,7 +142,7 @@ svg {
   max-width: 55rem;
   flex-direction: column;
   justify-content: center;
-  padding: 8.5rem clamp(2rem, 7vw, 8rem) 4rem;
+  padding: 5.8rem clamp(2rem, 6vw, 7rem) 2rem;
   color: white;
 }
 
@@ -163,9 +165,9 @@ svg {
 
 .hero-copy h1,
 .voice-intro h2 {
-  margin: 1.5rem 0;
+  margin: 1.1rem 0;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(3.3rem, 6vw, 7.1rem);
+  font-size: clamp(3rem, 5.2vw, 6rem);
   font-weight: 400;
   letter-spacing: -0.055em;
   line-height: 0.91;
@@ -181,8 +183,8 @@ svg {
   max-width: 39rem;
   margin: 0;
   color: rgba(255, 255, 255, 0.64);
-  font-size: clamp(0.96rem, 1.3vw, 1.12rem);
-  line-height: 1.75;
+  font-size: clamp(0.88rem, 1.15vw, 1rem);
+  line-height: 1.62;
 }
 
 .constitution-card {
@@ -191,8 +193,8 @@ svg {
   grid-template-columns: auto 1fr;
   align-items: center;
   gap: 1.5rem;
-  margin-top: 2.4rem;
-  padding: 1.2rem 1.35rem;
+  margin-top: 1.5rem;
+  padding: 0.9rem 1.1rem;
   border: 1px solid rgba(255, 255, 255, 0.13);
   background: rgba(255, 255, 255, 0.045);
   backdrop-filter: blur(8px);
@@ -203,7 +205,7 @@ svg {
   border-right: 1px solid rgba(255, 255, 255, 0.14);
   color: var(--orange);
   font-family: Georgia, serif;
-  font-size: 1.8rem;
+  font-size: 1.55rem;
 }
 
 .constitution-card strong {
@@ -220,7 +222,7 @@ svg {
 .hero-proof {
   display: flex;
   gap: clamp(1.5rem, 4vw, 4rem);
-  margin-top: 2.5rem;
+  margin-top: 1.5rem;
 }
 
 .hero-proof div {
@@ -230,7 +232,7 @@ svg {
 
 .hero-proof strong {
   font-family: Georgia, serif;
-  font-size: 1.8rem;
+  font-size: 1.55rem;
   font-weight: 400;
 }
 
@@ -243,9 +245,10 @@ svg {
 
 .chat-shell {
   display: grid;
+  height: 100svh;
   min-height: 100svh;
   grid-template-rows: auto 1fr auto auto;
-  padding-top: 5.4rem;
+  padding-top: 3.75rem;
   overflow: hidden;
   background: var(--paper);
   box-shadow: -2rem 0 6rem rgba(0, 0, 0, 0.2);
@@ -255,14 +258,14 @@ svg {
   display: flex;
   align-items: center;
   gap: 0.9rem;
-  padding: 1.25rem clamp(1.4rem, 3vw, 2.4rem);
+  padding: 0.85rem clamp(1.25rem, 2.5vw, 2rem);
   border-bottom: 1px solid var(--line);
 }
 
 .bot-mark {
   display: grid;
-  width: 2.6rem;
-  height: 2.6rem;
+  width: 2.25rem;
+  height: 2.25rem;
   place-items: center;
   border-radius: 50%;
   background: var(--orange);
@@ -300,8 +303,8 @@ svg {
   display: flex;
   min-height: 0;
   flex-direction: column;
-  gap: 1.3rem;
-  padding: 2rem clamp(1.4rem, 3vw, 2.4rem);
+  gap: 1rem;
+  padding: 1.25rem clamp(1.25rem, 2.5vw, 2rem);
   overflow-y: auto;
   scrollbar-color: rgba(21, 21, 21, 0.18) transparent;
 }
@@ -327,16 +330,47 @@ svg {
 }
 
 .message-bubble {
-  padding: 1rem 1.1rem;
+  padding: 0.8rem 0.9rem;
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.65);
-  font-size: 0.86rem;
-  line-height: 1.65;
+  font-size: 0.78rem;
+  line-height: 1.58;
 }
 
-.message-bubble > p {
+.message-bubble > p,
+.answer-content > p {
   margin: 0;
   white-space: pre-wrap;
+}
+
+.answer-content {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.answer-content h4 {
+  margin: 0;
+  color: var(--orange-dark);
+  font-size: 0.8rem;
+}
+
+.answer-content strong {
+  font-weight: 750;
+}
+
+.answer-list {
+  display: grid;
+  gap: 0.48rem;
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.answer-list li {
+  padding-left: 0.15rem;
+}
+
+.answer-list li::marker {
+  color: var(--orange);
 }
 
 .message-user .message-bubble {
@@ -354,6 +388,7 @@ svg {
 .sources summary {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 0.45rem;
   color: var(--orange-dark);
   cursor: pointer;
@@ -361,6 +396,21 @@ svg {
   font-weight: 750;
   list-style: none;
   text-transform: uppercase;
+}
+
+.sources summary > span {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.sources summary > svg {
+  width: 1rem;
+  transition: transform 180ms ease;
+}
+
+.sources[open] summary > svg {
+  transform: rotate(180deg);
 }
 
 .sources summary::-webkit-details-marker {
@@ -458,14 +508,14 @@ svg {
   grid-template-columns: 1fr auto;
   align-items: end;
   gap: 0.7rem;
-  margin: 0 clamp(1.4rem, 3vw, 2.4rem);
-  padding: 0.72rem;
+  margin: 0 clamp(1.25rem, 2.5vw, 2rem);
+  padding: 0.58rem;
   border: 1px solid rgba(21, 21, 21, 0.2);
   background: white;
 }
 
 .chat-form textarea {
-  min-height: 3rem;
+  min-height: 2.6rem;
   resize: none;
   border: 0;
   outline: 0;
@@ -480,8 +530,8 @@ svg {
 
 .chat-form button {
   display: grid;
-  width: 2.8rem;
-  height: 2.8rem;
+  width: 2.5rem;
+  height: 2.5rem;
   place-items: center;
   border: 0;
   background: var(--orange);
@@ -504,10 +554,47 @@ svg {
 
 .chat-note {
   margin: 0;
-  padding: 0.7rem 2rem 1rem;
+  padding: 0.55rem 2rem 0.7rem;
   color: #918d84;
   font-size: 0.62rem;
   text-align: center;
+}
+
+.bridge-banner {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: clamp(1rem, 3vw, 2.5rem);
+  padding: 1.3rem max(2rem, calc((100vw - 82rem) / 2));
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--orange);
+  color: white;
+}
+
+.bridge-banner > span {
+  font-family: Georgia, serif;
+  font-size: 1.8rem;
+  font-style: italic;
+  opacity: 0.72;
+}
+
+.bridge-banner p {
+  margin: 0;
+  font-family: Georgia, serif;
+  font-size: clamp(1.15rem, 2.3vw, 2rem);
+}
+
+.bridge-banner p strong {
+  font-weight: 400;
+  font-style: italic;
+}
+
+.bridge-banner > div {
+  font-size: 0.62rem;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .voice-section {
@@ -519,6 +606,11 @@ svg {
     linear-gradient(rgba(16, 17, 15, 0.93), rgba(16, 17, 15, 0.97)),
     radial-gradient(circle at 80% 20%, #6b2b17, transparent 35rem);
   color: white;
+}
+
+.voice-intro {
+  grid-row: 1;
+  grid-column: 2;
 }
 
 .eyebrow-light {
@@ -578,6 +670,8 @@ svg {
 }
 
 .feedback-card {
+  grid-row: 1;
+  grid-column: 1;
   align-self: center;
   padding: clamp(1.5rem, 3vw, 2.6rem);
   background: var(--paper);
@@ -706,6 +800,10 @@ footer p {
   margin: 0;
 }
 
+footer .brand img {
+  height: 1.35rem;
+}
+
 footer > span {
   justify-self: end;
 }
@@ -725,7 +823,9 @@ footer > span {
   }
 
   .hero-section {
+    height: auto;
     min-height: auto;
+    overflow: visible;
   }
 
   .hero-copy {
@@ -733,6 +833,7 @@ footer > span {
   }
 
   .chat-shell {
+    height: min(45rem, 100svh);
     min-height: 45rem;
     max-height: 52rem;
     padding-top: 0;
@@ -741,6 +842,20 @@ footer > span {
 
   .voice-section {
     gap: 4rem;
+  }
+
+  .voice-intro,
+  .feedback-card {
+    grid-row: auto;
+    grid-column: auto;
+  }
+
+  .feedback-card {
+    order: 1;
+  }
+
+  .voice-intro {
+    order: 2;
   }
 }
 
@@ -758,8 +873,8 @@ footer > span {
   }
 
   .hero-copy {
-    min-height: 40rem;
-    padding: 7rem 1.2rem 3rem;
+    min-height: 37rem;
+    padding: 5.5rem 1.2rem 2.5rem;
   }
 
   .hero-copy h1 {
@@ -776,6 +891,7 @@ footer > span {
   }
 
   .chat-shell {
+    height: 43rem;
     min-height: 43rem;
   }
 
@@ -785,6 +901,15 @@ footer > span {
 
   .voice-section {
     padding: 5rem 1.2rem;
+  }
+
+  .bridge-banner {
+    grid-template-columns: auto 1fr;
+    padding: 1.2rem;
+  }
+
+  .bridge-banner > div {
+    display: none;
   }
 
   .voice-intro h2 {

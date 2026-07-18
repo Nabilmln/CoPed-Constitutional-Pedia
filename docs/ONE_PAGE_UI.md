@@ -19,7 +19,11 @@ Chat behavior:
 - Enter sends a message and Shift+Enter inserts a new line;
 - loading, API errors, rate limits, rejected questions, and no-context answers
   remain visible in the same conversation;
+- lightweight Markdown formatting renders paragraphs, emphasis, and lists
+  without exposing raw `*` or `**` markers;
 - grounded answers expose expandable constitutional sources;
+- the message area scrolls internally so a long conversation does not stretch
+  the first section;
 - the UI states that CoPed only answers from UUD 1945.
 
 ## Section 2: public stats and feedback
@@ -31,7 +35,9 @@ The page reads aggregate counters from `GET /api/stats`:
 - accepted feedback.
 
 The feedback form posts to `POST /api/feedback`. Name and email are optional;
-the message is required. It uses the same anonymous UUID as chat.
+the message is required. It uses the same anonymous UUID as chat. On desktop,
+the form is placed on the left and the project story plus statistics on the
+right, separated from the chatbot by a short principle banner.
 
 ## Privacy and security boundaries
 

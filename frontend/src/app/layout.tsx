@@ -11,7 +11,11 @@ export const metadata: Metadata = {
   title: "CoPed — Tanya UUD 1945",
   description:
     "Platform edukasi UUD 1945 dengan pencarian dokumen dan jawaban AI yang grounded.",
-  icons: { icon: "/favicon.ico" },
+  icons: {
+    icon: "/coped-logo-black-circle.png",
+    shortcut: "/coped-logo-black-circle.png",
+    apple: "/coped-logo-black-circle.png",
+  },
   openGraph: {
     title: "CoPed — Tanya UUD 1945",
     description:
