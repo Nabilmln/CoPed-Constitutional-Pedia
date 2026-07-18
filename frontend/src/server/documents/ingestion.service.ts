@@ -35,14 +35,6 @@ export const resolveUudPdfPath = async (requestedPath?: string) => {
     requestedPath,
     process.env.UUD_PDF_PATH,
     path.resolve(process.cwd(), "data", "UUD1945.pdf"),
-    path.resolve(
-      process.cwd(),
-      "..",
-      "backend",
-      "gemini API",
-      "data",
-      "UUD1945.pdf",
-    ),
   ].filter((candidate): candidate is string => Boolean(candidate));
 
   for (const candidate of candidates) {

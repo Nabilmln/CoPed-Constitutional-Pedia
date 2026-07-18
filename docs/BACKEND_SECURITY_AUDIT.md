@@ -73,14 +73,12 @@ used because it proposes a breaking Next.js downgrade.
   also enforce request size limits.
 - CSP for the final one-page UI will be added with the frontend because its
   allowed scripts/styles depend on the final asset set.
-- The old Express/Python/LangChain/Chroma backend still increases repository
-  size and dependency exposure. It is removed only after this new backend gate
-  is stable in Phase 10.
-- Full `next build` is currently blocked by the legacy chat page. Phase 10/11
-  removes that obsolete UI rather than patching its old multi-RAG behavior.
+- The former Express/Python/LangChain/Chroma backend and obsolete multi-page UI
+  have been removed. The remaining supported backend is the TypeScript
+  implementation inside Next.js.
 
 ## Audit conclusion
 
-The new TypeScript backend is ready for legacy-backend removal. Its remote
+The TypeScript backend is the only supported backend. Its remote
 dependencies are Neon and Gemini only, and it no longer needs Python,
 LangChain, ChromaDB, or an Express gateway for the final architecture.

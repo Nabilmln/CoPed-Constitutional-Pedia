@@ -1,26 +1,19 @@
 # UUD 1945 Ingestion
 
-Phase 3 replaces the legacy Python document preparation with a Node.js CLI.
-It parses the local UUD 1945 PDF, repairs known extraction anomalies, builds
-constitutional chunks, and stores them in Neon without embeddings.
+The TypeScript CLI parses the local UUD 1945 PDF, repairs known extraction
+anomalies, builds constitutional chunks, and stores them in Neon without
+embeddings.
 
 ## Source PDF
 
-The PDF is intentionally not committed. Configure its location in
-`frontend/.env.local`:
+The canonical PDF is stored at `frontend/data/UUD1945.pdf`. Its location can
+be overridden in `frontend/.env.local`:
 
 ```env
-UUD_PDF_PATH=../backend/gemini API/data/UUD1945.pdf
+UUD_PDF_PATH=./data/UUD1945.pdf
 ```
 
-The CLI also checks these fallback locations:
-
-1. `frontend/data/UUD1945.pdf`;
-2. the legacy `backend/gemini API/data/UUD1945.pdf`.
-
-Before the legacy backend is removed, copy the source PDF to
-`frontend/data/UUD1945.pdf` or another private/local path and update
-`UUD_PDF_PATH`.
+Without an override, the CLI reads `frontend/data/UUD1945.pdf`.
 
 ## Preview without database writes
 

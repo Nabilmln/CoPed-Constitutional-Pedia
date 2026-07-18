@@ -1,264 +1,68 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# ================================
-# NODE MODULES (All directories)
-# ================================
+# Dependencies
 node_modules/
-*/node_modules/
-**/node_modules/
 
-# ================================
-# FRONTEND (Next.js/React)
-# ================================
-
-# dependencies - ONLY in frontend folder
-frontend/node_modules/
-frontend/.pnp
-frontend/.pnp.*
-frontend/.yarn/*
-!frontend/.yarn/patches
-!frontend/.yarn/plugins
-!frontend/.yarn/releases
-!frontend/.yarn/versions
-
-# testing - ONLY in frontend folder
-frontend/coverage/
-
-# next.js - ONLY in frontend folder
-frontend/.next/
-frontend/out/
-
-# production - ONLY in frontend folder
-frontend/build/
-
-# misc
-.DS_Store
-*.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# env files (can opt-in for committing if needed)
-.env*
-
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-
-# ================================
-# BACKEND (Python)
-# ================================
-
-backend/node_modules/
-
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
+# Next.js and build output
+.next/
+out/
 build/
-develop-eggs/
 dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
+coverage/
 
-# PyInstaller
-*.manifest
-*.spec
-
-# Virtual Environment
-env/
-venv/
-.venv/
-ENV/
-env.bak/
-venv.bak/
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# IPython
-profile_default/
-ipython_config.py
-
-# ================================
-# AI/ML SPECIFIC
-# ================================
-
-# Vector Database
-chroma_db/
-vector_db/
-chromadb/
-faiss_index/
-*.index
-
-# Dataset files (if large)
-data/*.pdf
-data/*.txt
-data/*.json
-data/*.csv
-# Keep data folder structure but ignore large files
-!data/.gitkeep
-
-# Embeddings cache
-/embeddings/
-.embeddings/
-embedding_cache/
-
-# ================================
-# DEVELOPMENT TOOLS
-# ================================
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# Logs
-*.log
-logs/
-
-# Database
-*.db
-*.sqlite
-*.sqlite3
-
-# Cache
-.cache/
-*.cache
-
-# Temporary files
-*.tmp
-*.temp
-.tmp/
-.temp/
-
-# ================================
-# OPERATING SYSTEM
-# ================================
-
-# Windows
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-
-# macOS
-.DS_Store
-.AppleDouble
-.LSOverride
-
-# Linux
-*~
-
-# ================================
-# SENSITIVE DATA
-# ================================
-
-# Environment variables - EXCLUDE all .env files
-.env
-.env.local
-.env.development
-.env.test
-.env.production
-.env.staging
-backend/.env
-backend/gemini API/.env
-frontend/.env
-frontend/.env.local
-
-# IMPORTANT: Keep .env.example files for documentation
+# Environment files and secrets
+.env*
 !.env.example
-!backend/.env.example
-!backend/gemini API/.env.example
-!frontend/.env.example
-
-# API Keys & Secrets
-secrets/
 *.key
 *.pem
 *.p12
 *.pfx
 *.credentials
+secrets/
 
-# Configuration files with sensitive data
-config.json
-settings.json
-credentials.json
+# Vercel
+.vercel/
 
-# ================================
-# PROJECT SPECIFIC
-# ================================
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
 
-# RAG System cache
-rag_cache/
-query_cache/
-backend/gemini API/cache/
-backend/gemini API/dataset_cache/
+# Logs and runtime artifacts
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.cache/
+*.cache
+*.tmp
+*.temp
+.tmp/
+.temp/
 
-# PDF processing temp
-pdf_temp/
-extracted_text/
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
 
-# Test results
+# IDE and operating system
+.vscode/
+.idea/
+.kiro/
+.pytest_cache/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Generated evaluation artifacts
 test_results/
 benchmark_results/
-
-# Documentation builds
-docs/_build/
-site/
-
-# Coverage reports
-htmlcov/
-.coverage
-.coverage.*
-coverage.xml
-
-# Backup files
-*.bak
-*.backup
-*.orig
-
-# ================================
-# TEST & TASK ARTIFACTS (Development only)
-# ================================
-
-# Python verification scripts (not formal test suite)
-backend/gemini API/test_*.py
-backend/gemini API/verify_env_setup.py
-backend/verify-env-setup.js
-
-# Task completion reports
 TASK_*_REPORT.md
 TASK_*_COMPLETION_REPORT.md
 **/TASK_*.md
 implementation_plan.md
 
-# Kiro AI specs (internal tooling)
-.kiro/
-
-# Frontend dev test pages
-frontend/src/app/test/
-frontend/src/utils/testConnection.js
+# Canonical source document is intentionally versioned.
+data/*
+!frontend/data/
+!frontend/data/UUD1945.pdf
