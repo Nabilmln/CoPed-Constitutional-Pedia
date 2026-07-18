@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { FeedbackRateLimitError } from "./feedback.errors";
-import { submitFeedback } from "./feedback.service";
+import {
+  readPublicTestimonials,
+  submitFeedback,
+} from "./feedback.service";
 
 const SESSION_ID = "d0dc2ec5-ff16-4ad8-91df-942eb3852592";
 
@@ -60,4 +63,25 @@ test("feedback rate limit stops before writes", async () => {
   );
 
   assert.equal(wroteData, false);
+});
+
+test("public testimonials expose only presentation fields", async () => {
+  const createdAt = new Date("2026-07-18T00:00:00.000Z");
+  const result = await readPublicTestimonials({
+    readTestimonials: async () => [
+      {
+        name: null,
+        message: "Penjelasannya mudah dipahami.",
+        createdAt,
+      },
+    ],
+  });
+
+  assert.deepEqual(result, [
+    {
+      name: "Pengguna CoPed",
+      message: "Penjelasannya mudah dipahami.",
+      createdAt,
+    },
+  ]);
 });

@@ -1,4 +1,4 @@
-import { and, count, eq, gt } from "drizzle-orm";
+import { and, count, desc, eq, gt } from "drizzle-orm";
 
 import { getDatabase } from "@/server/database/client";
 import { feedback } from "@/server/database/schema";
@@ -43,4 +43,19 @@ export const createFeedback = async (
     });
 
   return created;
+};
+
+export const getReviewedTestimonials = async (limit = 18) => {
+  const database = getDatabase();
+
+  return database
+    .select({
+      name: feedback.name,
+      message: feedback.message,
+      createdAt: feedback.createdAt,
+    })
+    .from(feedback)
+    .where(eq(feedback.status, "reviewed"))
+    .orderBy(desc(feedback.createdAt))
+    .limit(limit);
 };

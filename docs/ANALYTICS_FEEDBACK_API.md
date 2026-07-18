@@ -1,4 +1,4 @@
-# Phase 8 — Analytics, Statistics, and Feedback API
+# Analytics, Statistics, and Testimonial API
 
 These endpoints support the second section of the final one-page application.
 They use the same anonymous browser UUID as the chat endpoint.
@@ -65,6 +65,10 @@ the public counters reasonably fresh.
 
 ## POST `/api/feedback`
 
+The public one-page UI presents this as a testimonial form. It asks only for a
+name and message; email remains an optional backwards-compatible API field but
+is not collected by the current interface.
+
 Request:
 
 ```json
@@ -106,9 +110,42 @@ FEEDBACK_RATE_LIMIT_WINDOW_SECONDS=86400
 The fourth submission from the same UUID within 24 hours receives HTTP 429 and
 a `Retry-After` header.
 
+## GET `/api/testimonials`
+
+Returns only moderated feedback where `status = reviewed`:
+
+```json
+{
+  "success": true,
+  "data": {
+    "testimonials": [
+      {
+        "name": "Budi",
+        "message": "Penjelasannya membantu saya memahami pasal.",
+        "created_at": "2026-07-18T00:00:00.000Z"
+      }
+    ]
+  }
+}
+```
+
+The endpoint never returns email, session UUID, or internal status. New
+submissions are not public until an administrator reviews them:
+
+```sql
+update feedback
+set status = 'reviewed'
+where id = 'FEEDBACK_UUID';
+```
+
+The hero fetches reviewed testimonials, shuffles them in the browser, and
+animates them vertically. When none are reviewed, the UI shows neutral
+invitation cards instead of fabricated user quotes.
+
 ## Privacy boundary
 
 - No IP address or user agent is stored.
-- Name and email are optional.
+- Name is optional in the public UI; email is not collected there.
+- Testimonials require moderation before public display.
 - Public stats return aggregate counts only.
 - Database connection strings and provider keys remain server-only.

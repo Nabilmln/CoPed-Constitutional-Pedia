@@ -58,6 +58,7 @@ npm run build
 - `POST /api/analytics/visit`
 - `GET /api/stats`
 - `POST /api/feedback`
+- `GET /api/testimonials`
 
 Dokumentasi lengkap:
 

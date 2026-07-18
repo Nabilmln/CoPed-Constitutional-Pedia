@@ -1,13 +1,16 @@
 # Phase 11 — One-page portfolio UI
 
-The public application is a single Next.js page with two sections.
+The public application is a single Next.js page with three sections.
 
-## Section 1: information and chatbot
+## Section 1: information and testimonials
 
 Desktop uses a split layout:
 
 - the left side introduces UUD 1945 and the grounded nature of CoPed;
-- the right side is the chatbot itself.
+- the right side continuously rotates reviewed user testimonials from bottom
+  to top, with wheel-like scale and fade transitions.
+
+## Section 2: chatbot
 
 Users do not create, select, or name rooms. On first load, the browser calls
 `POST /api/analytics/visit`, stores the returned anonymous UUID in
@@ -26,7 +29,11 @@ Chat behavior:
   the first section;
 - the UI states that CoPed only answers from UUD 1945.
 
-## Section 2: public stats and feedback
+The chat is a centered card whose message list scrolls internally. New
+messages never call document-level `scrollIntoView`, so chatting cannot move
+the page to another section.
+
+## Section 3: public stats and testimonials
 
 The page reads aggregate counters from `GET /api/stats`:
 
@@ -34,10 +41,14 @@ The page reads aggregate counters from `GET /api/stats`:
 - persisted user questions;
 - accepted feedback.
 
-The feedback form posts to `POST /api/feedback`. Name and email are optional;
-the message is required. It uses the same anonymous UUID as chat. On desktop,
-the form is placed on the left and the project story plus statistics on the
-right, separated from the chatbot by a short principle banner.
+The testimonial form posts to `POST /api/feedback`. Name is optional, email is
+not collected, and the message is required. It uses the same anonymous UUID as
+chat. On desktop, the form is placed on the left and the project story plus
+statistics on the right.
+
+New records have status `new`. The hero's `GET /api/testimonials` endpoint
+returns only records changed to `reviewed`, preventing unmoderated content from
+appearing publicly.
 
 ## Privacy and security boundaries
 

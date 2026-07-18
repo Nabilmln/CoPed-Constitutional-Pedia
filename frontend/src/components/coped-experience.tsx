@@ -3,6 +3,7 @@
 import {
   Fragment,
   FormEvent,
+  type CSSProperties,
   type ReactNode,
   useCallback,
   useEffect,
@@ -68,6 +69,38 @@ type FeedbackSuccess = {
   success: true;
   data: { session_id: string };
 };
+
+type Testimonial = {
+  name: string;
+  message: string;
+  created_at: string;
+};
+
+type TestimonialsSuccess = {
+  success: true;
+  data: { testimonials: Testimonial[] };
+};
+
+const EMPTY_TESTIMONIALS: Testimonial[] = [
+  {
+    name: "Ruang untuk suaramu",
+    message:
+      "Testimoni pengguna yang telah ditinjau akan tampil di sini. Bagikan pengalamanmu pada form di bawah.",
+    created_at: "",
+  },
+  {
+    name: "CoPed",
+    message:
+      "Membantu lebih banyak orang memahami konstitusi dimulai dari pengalaman setiap pengguna.",
+    created_at: "",
+  },
+  {
+    name: "Testimoni terkurasi",
+    message:
+      "Setiap pesan ditinjau sebelum ditampilkan agar ruang ini tetap aman dan relevan.",
+    created_at: "",
+  },
+];
 
 const SUGGESTED_QUESTIONS = [
   "Apa isi Pasal 1 ayat (1)?",
@@ -218,8 +251,11 @@ export default function CopedExperience() {
     "idle" | "sending" | "success" | "error"
   >("idle");
   const [feedbackMessage, setFeedbackMessage] = useState("");
+  const [testimonials, setTestimonials] =
+    useState<Testimonial[]>(EMPTY_TESTIMONIALS);
+  const [activeTestimonial, setActiveTestimonial] = useState(0);
   const sessionPromiseRef = useRef<Promise<string> | null>(null);
-  const messageEndRef = useRef<HTMLDivElement>(null);
+  const chatMessagesRef = useRef<HTMLDivElement>(null);
 
   const saveSession = useCallback((nextSessionId: string) => {
     localStorage.setItem(SESSION_STORAGE_KEY, nextSessionId);
@@ -269,16 +305,54 @@ export default function CopedExperience() {
     }
   }, []);
 
+  const loadTestimonials = useCallback(async () => {
+    try {
+      const result =
+        await requestJson<TestimonialsSuccess>("/api/testimonials");
+      const shuffled = [...result.data.testimonials].sort(
+        () => Math.random() - 0.5,
+      );
+      setTestimonials(
+        shuffled.length > 0 ? shuffled : EMPTY_TESTIMONIALS,
+      );
+      setActiveTestimonial(0);
+    } catch {
+      setTestimonials(EMPTY_TESTIMONIALS);
+    }
+  }, []);
+
   useEffect(() => {
     void ensureSession().catch(() => {
       setChatError("Sesi anonim belum dapat dibuat. Silakan muat ulang halaman.");
     });
     void loadStats();
-  }, [ensureSession, loadStats]);
+    void loadTestimonials();
+  }, [ensureSession, loadStats, loadTestimonials]);
 
   useEffect(() => {
-    messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const container = chatMessagesRef.current;
+
+    if (container) {
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: "smooth",
+      });
+    }
   }, [isChatLoading, messages]);
+
+  useEffect(() => {
+    if (testimonials.length < 2) {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      setActiveTestimonial(
+        (current) => (current + 1) % testimonials.length,
+      );
+    }, 3_800);
+
+    return () => window.clearInterval(interval);
+  }, [testimonials.length]);
 
   const sendQuestion = async (rawQuestion: string) => {
     const trimmedQuestion = rawQuestion.trim();
@@ -361,7 +435,6 @@ export default function CopedExperience() {
 
     const form = new FormData(formElement);
     const name = String(form.get("name") ?? "").trim();
-    const email = String(form.get("email") ?? "").trim();
     const message = String(form.get("message") ?? "").trim();
 
     try {
@@ -372,7 +445,6 @@ export default function CopedExperience() {
         body: JSON.stringify({
           sessionId: activeSessionId,
           ...(name ? { name } : {}),
-          ...(email ? { email } : {}),
           message,
         }),
       });
@@ -381,7 +453,7 @@ export default function CopedExperience() {
       formElement.reset();
       setFeedbackState("success");
       setFeedbackMessage(
-        "Terima kasih. Masukanmu sudah tersimpan dan sangat berarti bagi CoPed.",
+        "Terima kasih. Testimonimu tersimpan dan akan tampil setelah ditinjau.",
       );
       void loadStats();
     } catch (error) {
@@ -389,7 +461,7 @@ export default function CopedExperience() {
       setFeedbackMessage(
         error instanceof Error
           ? error.message
-          : "Kritik dan saran belum dapat dikirim.",
+          : "Testimoni belum dapat dikirim.",
       );
     }
   };
@@ -403,7 +475,8 @@ export default function CopedExperience() {
         </a>
         <nav aria-label="Navigasi utama">
           <a href="#beranda">Beranda</a>
-          <a href="#suara-kamu">Suara kamu</a>
+          <a href="#chatbot">Chatbot</a>
+          <a href="#testimoni">Testimoni</a>
         </nav>
         <a className="header-cta" href="#chatbot">
           Mulai bertanya <ArrowIcon />
@@ -453,7 +526,77 @@ export default function CopedExperience() {
           </div>
         </div>
 
-        <section className="chat-shell" id="chatbot" aria-label="Chatbot UUD 1945">
+        <div className="testimonial-showcase" aria-label="Testimoni pengguna">
+          <div className="testimonial-heading">
+            <span>Impresi pengguna</span>
+            <strong>Apa kata mereka?</strong>
+          </div>
+          <div className="testimonial-wheel">
+            {testimonials.map((testimonial, index) => {
+              let offset =
+                (index - activeTestimonial + testimonials.length) %
+                testimonials.length;
+
+              if (offset > testimonials.length / 2) {
+                offset -= testimonials.length;
+              }
+
+              if (Math.abs(offset) > 2) {
+                return null;
+              }
+
+              return (
+                <article
+                  className="testimonial-slide"
+                  key={`${testimonial.name}-${testimonial.message}`}
+                  style={
+                    {
+                      "--testimonial-offset": offset,
+                    } as CSSProperties
+                  }
+                  data-position={offset}
+                >
+                  <QuoteIcon />
+                  <p>{testimonial.message}</p>
+                  <div className="testimonial-author">
+                    <span>{testimonial.name}</span>
+                    <i>Pengguna CoPed</i>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+          <p className="testimonial-note">
+            Ditampilkan secara acak setelah melalui peninjauan.
+          </p>
+        </div>
+      </section>
+
+      <aside className="bridge-banner" aria-label="Prinsip CoPed">
+        <span>01</span>
+        <p>
+          Bukan menggantikan konstitusi,
+          <strong> tetapi mendekatkan maknanya.</strong>
+        </p>
+        <div aria-hidden="true">CoPed · UUD 1945</div>
+      </aside>
+
+      <section className="chat-stage" id="chatbot">
+        <div className="section-heading">
+          <div className="eyebrow">
+            <span />
+            Tanya langsung pada dokumen
+          </div>
+          <h2>
+            Satu ruang untuk
+            <em> memahami UUD 1945.</em>
+          </h2>
+          <p>
+            Ajukan pertanyaan dan buka rujukan pasal pada setiap jawaban.
+          </p>
+        </div>
+
+        <section className="chat-shell" aria-label="Chatbot UUD 1945">
           <div className="chat-header">
             <div className="bot-mark" aria-hidden="true">
               C
@@ -466,7 +609,11 @@ export default function CopedExperience() {
             </div>
           </div>
 
-          <div className="chat-messages" aria-live="polite">
+          <div
+            className="chat-messages"
+            aria-live="polite"
+            ref={chatMessagesRef}
+          >
             {messages.map((message) => (
               <article
                 className={`message message-${message.role}`}
@@ -533,7 +680,6 @@ export default function CopedExperience() {
                 <p>Menelusuri UUD 1945…</p>
               </div>
             ) : null}
-            <div ref={messageEndRef} />
           </div>
 
           <form className="chat-form" onSubmit={handleChatSubmit}>
@@ -571,35 +717,35 @@ export default function CopedExperience() {
       </section>
 
       <aside className="bridge-banner" aria-label="Prinsip CoPed">
-        <span>01</span>
+        <span>02</span>
         <p>
-          Bukan menggantikan konstitusi,
-          <strong> tetapi mendekatkan maknanya.</strong>
+          Teknologi yang baik dimulai
+          <strong> dari suara penggunanya.</strong>
         </p>
-        <div aria-hidden="true">CoPed · UUD 1945</div>
+        <div aria-hidden="true">CoPed · Tumbuh bersama</div>
       </aside>
 
-      <section className="voice-section" id="suara-kamu">
+      <section className="voice-section" id="testimoni">
         <div className="voice-intro">
           <div className="eyebrow eyebrow-light">
             <span />
             Dibangun bersama pengguna
           </div>
           <h2>
-            Suara kamu,
+            Pengalamanmu,
             <br />
-            <em>arah berkembang kami.</em>
+            <em>berarti bagi kami.</em>
           </h2>
           <p>
-            CoPed adalah portfolio edukasi yang terus disempurnakan. Ceritakan
-            pengalamanmu agar akses terhadap konstitusi makin inklusif.
+            Ceritakan kesanmu setelah menggunakan CoPed. Testimoni yang sudah
+            ditinjau akan menjadi bagian dari halaman ini.
           </p>
 
           <div className="stats-grid" aria-label="Statistik CoPed">
             {[
               ["Pengunjung", stats?.totalVisitors],
               ["Pertanyaan", stats?.totalQuestions],
-              ["Masukan", stats?.totalFeedback],
+              ["Testimoni", stats?.totalFeedback],
             ].map(([label, value]) => (
               <div className="stat-card" key={label}>
                 <strong>
@@ -620,42 +766,30 @@ export default function CopedExperience() {
           <div className="feedback-heading">
             <span>02</span>
             <div>
-              <h3>Kritik &amp; saran</h3>
-              <p>Identitas bersifat opsional.</p>
+              <h3>Bagikan testimoni</h3>
+              <p>Nama boleh dikosongkan.</p>
             </div>
           </div>
 
-          <div className="field-row">
-            <label>
-              Nama <span>opsional</span>
-              <input
-                autoComplete="name"
-                maxLength={80}
-                minLength={2}
-                name="name"
-                placeholder="Nama kamu"
-                type="text"
-              />
-            </label>
-            <label>
-              Email <span>opsional</span>
-              <input
-                autoComplete="email"
-                maxLength={254}
-                name="email"
-                placeholder="email@contoh.com"
-                type="email"
-              />
-            </label>
-          </div>
+          <label>
+            Nama <span>opsional</span>
+            <input
+              autoComplete="name"
+              maxLength={80}
+              minLength={2}
+              name="name"
+              placeholder="Nama kamu"
+              type="text"
+            />
+          </label>
 
           <label>
-            Pesan
+            Pengalaman menggunakan CoPed
             <textarea
               maxLength={1000}
               minLength={5}
               name="message"
-              placeholder="Apa yang perlu kami tingkatkan?"
+              placeholder="Bagaimana pengalamanmu menggunakan CoPed?"
               required
               rows={6}
             />
@@ -666,7 +800,7 @@ export default function CopedExperience() {
             disabled={feedbackState === "sending"}
             type="submit"
           >
-            {feedbackState === "sending" ? "Mengirim…" : "Kirim masukan"}
+            {feedbackState === "sending" ? "Mengirim…" : "Kirim testimoni"}
             <ArrowIcon />
           </button>
 

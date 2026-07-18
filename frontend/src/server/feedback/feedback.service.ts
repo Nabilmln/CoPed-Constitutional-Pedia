@@ -7,6 +7,7 @@ import { FeedbackRateLimitError } from "./feedback.errors";
 import {
   countRecentFeedback,
   createFeedback,
+  getReviewedTestimonials,
 } from "./feedback.repository";
 import type { ValidatedFeedbackRequest } from "./feedback.validation";
 
@@ -57,4 +58,22 @@ export const submitFeedback = async (
     status: created.status,
     createdAt: created.createdAt,
   };
+};
+
+type TestimonialDependencies = {
+  readTestimonials?: typeof getReviewedTestimonials;
+};
+
+export const readPublicTestimonials = async (
+  dependencies: TestimonialDependencies = {},
+) => {
+  const readTestimonials =
+    dependencies.readTestimonials ?? getReviewedTestimonials;
+  const testimonials = await readTestimonials();
+
+  return testimonials.map((testimonial) => ({
+    name: testimonial.name?.trim() || "Pengguna CoPed",
+    message: testimonial.message,
+    createdAt: testimonial.createdAt,
+  }));
 };
