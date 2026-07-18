@@ -4,15 +4,17 @@ import { ZodError } from "zod";
 import { FeedbackRateLimitError } from "@/server/feedback/feedback.errors";
 import { submitFeedback } from "@/server/feedback/feedback.service";
 import { feedbackRequestSchema } from "@/server/feedback/feedback.validation";
+import {
+  apiRequestErrorResponse,
+  assertTrustedJsonRequest,
+  NO_STORE_API_HEADERS,
+} from "@/server/http/api-security";
 
 export const runtime = "nodejs";
 
-const noStoreHeaders = {
-  "Cache-Control": "no-store",
-};
-
 export async function POST(request: Request) {
   try {
+    assertTrustedJsonRequest(request);
     const body: unknown = await request.json();
     const input = feedbackRequestSchema.parse(body);
     const result = await submitFeedback(input);
@@ -27,13 +29,19 @@ export async function POST(request: Request) {
           created_at: result.createdAt.toISOString(),
         },
       },
-      { status: 201, headers: noStoreHeaders },
+      { status: 201, headers: NO_STORE_API_HEADERS },
     );
   } catch (error) {
+    const securityResponse = apiRequestErrorResponse(error);
+
+    if (securityResponse) {
+      return securityResponse;
+    }
+
     if (error instanceof SyntaxError) {
       return NextResponse.json(
         { success: false, message: "Invalid JSON request body." },
-        { status: 400, headers: noStoreHeaders },
+        { status: 400, headers: NO_STORE_API_HEADERS },
       );
     }
 
@@ -47,7 +55,7 @@ export async function POST(request: Request) {
             message: issue.message,
           })),
         },
-        { status: 400, headers: noStoreHeaders },
+        { status: 400, headers: NO_STORE_API_HEADERS },
       );
     }
 
@@ -61,7 +69,7 @@ export async function POST(request: Request) {
         {
           status: 429,
           headers: {
-            ...noStoreHeaders,
+            ...NO_STORE_API_HEADERS,
             "Retry-After": String(error.retryAfterSeconds),
           },
         },
@@ -77,7 +85,7 @@ export async function POST(request: Request) {
         success: false,
         message: "Kritik dan saran belum dapat dikirim. Silakan coba lagi.",
       },
-      { status: 500, headers: noStoreHeaders },
+      { status: 500, headers: NO_STORE_API_HEADERS },
     );
   }
 }

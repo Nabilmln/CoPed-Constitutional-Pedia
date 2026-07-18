@@ -32,6 +32,12 @@ const embeddingEnvSchema = z.object({
     .min(1)
     .max(100)
     .default(8),
+  GEMINI_REQUEST_TIMEOUT_MS: z.coerce
+    .number()
+    .int()
+    .min(1_000)
+    .max(60_000)
+    .default(15_000),
 });
 
 export type EmbeddingEnv = z.infer<typeof embeddingEnvSchema>;
@@ -54,6 +60,12 @@ const generationEnvSchema = z.object({
     .trim()
     .min(1)
     .default("gemini-3.1-flash-lite"),
+  GEMINI_REQUEST_TIMEOUT_MS: z.coerce
+    .number()
+    .int()
+    .min(1_000)
+    .max(60_000)
+    .default(15_000),
 });
 
 export type GenerationEnv = z.infer<typeof generationEnvSchema>;

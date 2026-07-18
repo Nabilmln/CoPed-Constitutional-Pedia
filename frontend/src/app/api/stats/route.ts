@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 
 import { readPublicStats } from "@/server/analytics/analytics.service";
+import {
+  API_SECURITY_HEADERS,
+  NO_STORE_API_HEADERS,
+} from "@/server/http/api-security";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,6 +24,7 @@ export async function GET() {
       },
       {
         headers: {
+          ...API_SECURITY_HEADERS,
           "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60",
         },
       },
@@ -33,7 +38,7 @@ export async function GET() {
       { success: false, message: "Unable to load public statistics." },
       {
         status: 500,
-        headers: { "Cache-Control": "no-store" },
+        headers: NO_STORE_API_HEADERS,
       },
     );
   }

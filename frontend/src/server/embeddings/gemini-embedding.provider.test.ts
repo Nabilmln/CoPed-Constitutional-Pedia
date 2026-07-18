@@ -19,6 +19,7 @@ test("Gemini provider sends retrieval document configuration", async () => {
   let capturedTask = "";
   let capturedTitle: string | undefined;
   let capturedDimension = 0;
+  let capturedSignal: AbortSignal | undefined;
   const provider = new GeminiEmbeddingProvider({
     model: "test-model",
     dimension: 3,
@@ -28,6 +29,7 @@ test("Gemini provider sends retrieval document configuration", async () => {
           capturedTask = input.config.taskType;
           capturedTitle = input.config.title;
           capturedDimension = input.config.outputDimensionality;
+          capturedSignal = input.config.abortSignal;
           return { embeddings: [{ values: createVector(3) }] };
         },
       },
@@ -43,6 +45,7 @@ test("Gemini provider sends retrieval document configuration", async () => {
   assert.equal(capturedTask, "RETRIEVAL_DOCUMENT");
   assert.equal(capturedTitle, "UUD 1945");
   assert.equal(capturedDimension, 3);
+  assert.ok(capturedSignal instanceof AbortSignal);
   assert.ok(
     Math.abs(
       Math.sqrt(embedding.reduce((sum, value) => sum + value * value, 0)) -

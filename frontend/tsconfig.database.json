@@ -12,6 +12,7 @@
     "src/server/database/**/*.ts",
     "src/server/analytics/**/*.ts",
     "src/server/feedback/**/*.ts",
+    "src/server/http/**/*.ts",
     "src/server/documents/**/*.ts",
     "src/server/embeddings/**/*.ts",
     "src/server/retrieval/**/*.ts",

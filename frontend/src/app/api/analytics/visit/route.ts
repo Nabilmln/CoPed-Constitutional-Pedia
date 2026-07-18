@@ -3,15 +3,17 @@ import { ZodError } from "zod";
 
 import { registerVisit } from "@/server/analytics/analytics.service";
 import { visitRequestSchema } from "@/server/analytics/analytics.validation";
+import {
+  apiRequestErrorResponse,
+  assertTrustedJsonRequest,
+  NO_STORE_API_HEADERS,
+} from "@/server/http/api-security";
 
 export const runtime = "nodejs";
 
-const noStoreHeaders = {
-  "Cache-Control": "no-store",
-};
-
 export async function POST(request: Request) {
   try {
+    assertTrustedJsonRequest(request);
     const body: unknown = await request.json();
     const input = visitRequestSchema.parse(body);
     const result = await registerVisit(input.sessionId);
@@ -21,13 +23,19 @@ export async function POST(request: Request) {
         success: true,
         data: { session_id: result.sessionId },
       },
-      { headers: noStoreHeaders },
+      { headers: NO_STORE_API_HEADERS },
     );
   } catch (error) {
+    const securityResponse = apiRequestErrorResponse(error);
+
+    if (securityResponse) {
+      return securityResponse;
+    }
+
     if (error instanceof SyntaxError) {
       return NextResponse.json(
         { success: false, message: "Invalid JSON request body." },
-        { status: 400, headers: noStoreHeaders },
+        { status: 400, headers: NO_STORE_API_HEADERS },
       );
     }
 
@@ -41,7 +49,7 @@ export async function POST(request: Request) {
             message: issue.message,
           })),
         },
-        { status: 400, headers: noStoreHeaders },
+        { status: 400, headers: NO_STORE_API_HEADERS },
       );
     }
 
@@ -51,7 +59,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       { success: false, message: "Unable to register visit." },
-      { status: 500, headers: noStoreHeaders },
+      { status: 500, headers: NO_STORE_API_HEADERS },
     );
   }
 }

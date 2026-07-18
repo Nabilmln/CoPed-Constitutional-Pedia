@@ -19,6 +19,7 @@ type GeminiGenerationClient = {
         systemInstruction: string;
         temperature: number;
         maxOutputTokens: number;
+        abortSignal: AbortSignal;
       };
     }): Promise<{ text?: string }>;
   };
@@ -29,6 +30,7 @@ type GeminiAnswerProviderOptions = {
   model?: string;
   client?: GeminiGenerationClient;
   sleep?: (durationMs: number) => Promise<void>;
+  timeoutMs?: number;
 };
 
 const SYSTEM_INSTRUCTION = `Anda adalah asisten edukasi UUD 1945.
@@ -52,6 +54,7 @@ export class GeminiAnswerProvider implements AnswerProvider {
 
   private readonly client: GeminiGenerationClient;
   private readonly sleep: (durationMs: number) => Promise<void>;
+  private readonly timeoutMs: number;
 
   constructor(options: GeminiAnswerProviderOptions = {}) {
     const configuredEnv =
@@ -70,6 +73,10 @@ export class GeminiAnswerProvider implements AnswerProvider {
         apiKey,
       });
     this.sleep = options.sleep ?? wait;
+    this.timeoutMs =
+      options.timeoutMs ??
+      configuredEnv?.GEMINI_REQUEST_TIMEOUT_MS ??
+      15_000;
   }
 
   async generateAnswer(input: AnswerProviderInput): Promise<string> {
@@ -88,6 +95,7 @@ ${input.context}`;
             systemInstruction: SYSTEM_INSTRUCTION,
             temperature: 0.1,
             maxOutputTokens: 500,
+            abortSignal: AbortSignal.timeout(this.timeoutMs),
           },
         });
         const answer = response.text?.trim();

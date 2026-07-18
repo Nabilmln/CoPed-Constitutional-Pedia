@@ -7,16 +7,18 @@ import {
 } from "@/server/chat/chat.errors";
 import { processChatMessage } from "@/server/chat/chat.service";
 import { chatRequestSchema } from "@/server/chat/chat.validation";
+import {
+  apiRequestErrorResponse,
+  assertTrustedJsonRequest,
+  NO_STORE_API_HEADERS,
+} from "@/server/http/api-security";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const noStoreHeaders = {
-  "Cache-Control": "no-store",
-};
-
 export async function POST(request: Request) {
   try {
+    assertTrustedJsonRequest(request);
     const body: unknown = await request.json();
     const input = chatRequestSchema.parse(body);
     const result = await processChatMessage({
@@ -36,13 +38,19 @@ export async function POST(request: Request) {
           model: result.model,
         },
       },
-      { headers: noStoreHeaders },
+      { headers: NO_STORE_API_HEADERS },
     );
   } catch (error) {
+    const securityResponse = apiRequestErrorResponse(error);
+
+    if (securityResponse) {
+      return securityResponse;
+    }
+
     if (error instanceof SyntaxError) {
       return NextResponse.json(
         { success: false, message: "Invalid JSON request body." },
-        { status: 400, headers: noStoreHeaders },
+        { status: 400, headers: NO_STORE_API_HEADERS },
       );
     }
 
@@ -56,7 +64,7 @@ export async function POST(request: Request) {
             message: issue.message,
           })),
         },
-        { status: 400, headers: noStoreHeaders },
+        { status: 400, headers: NO_STORE_API_HEADERS },
       );
     }
 
@@ -70,7 +78,7 @@ export async function POST(request: Request) {
         {
           status: 429,
           headers: {
-            ...noStoreHeaders,
+            ...NO_STORE_API_HEADERS,
             "Retry-After": String(error.retryAfterSeconds),
           },
         },
@@ -85,7 +93,7 @@ export async function POST(request: Request) {
             "Maaf, layanan chatbot sedang mengalami kendala. Silakan coba lagi.",
           session_id: error.sessionId,
         },
-        { status: 503, headers: noStoreHeaders },
+        { status: 503, headers: NO_STORE_API_HEADERS },
       );
     }
 
@@ -98,7 +106,7 @@ export async function POST(request: Request) {
         success: false,
         message: "Internal server error.",
       },
-      { status: 500, headers: noStoreHeaders },
+      { status: 500, headers: NO_STORE_API_HEADERS },
     );
   }
 }

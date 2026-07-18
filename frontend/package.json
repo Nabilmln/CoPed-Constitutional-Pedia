@@ -15,6 +15,8 @@
     "test:rag": "tsx --test src/server/rag/*.test.ts",
     "test:chat": "tsx --test src/server/chat/*.test.ts",
     "test:engagement": "tsx --test src/server/analytics/*.test.ts src/server/feedback/*.test.ts",
+    "test:security": "tsx --test src/server/http/*.test.ts",
+    "test:backend": "npm run test:ingestion && npm run test:embeddings && npm run test:retrieval && npm run test:rag && npm run test:chat && npm run test:engagement && npm run test:security && npm run typecheck:database && npx drizzle-kit check",
     "ingest:uud": "tsx scripts/ingest-uud.ts",
     "embed:uud": "tsx scripts/embed-uud.ts",
     "evaluate:retrieval": "tsx scripts/evaluate-retrieval.ts",

@@ -13,6 +13,7 @@ test("chat route returns a controlled response for malformed JSON", async () => 
   );
 
   assert.equal(response.status, 400);
+  assert.equal(response.headers.get("x-content-type-options"), "nosniff");
   assert.deepEqual(await response.json(), {
     success: false,
     message: "Invalid JSON request body.",
@@ -35,4 +36,22 @@ test("chat route returns validation details without touching services", async ()
   assert.equal(response.status, 400);
   assert.equal(body.success, false);
   assert.equal(body.details[0].path, "message");
+});
+
+test("chat route rejects cross-origin browser requests", async () => {
+  const response = await POST(
+    new Request("https://example.com/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Origin: "https://attacker.example",
+        "Sec-Fetch-Site": "cross-site",
+      },
+      body: JSON.stringify({
+        message: "Apa isi Pasal 1 ayat 1?",
+      }),
+    }),
+  );
+
+  assert.equal(response.status, 403);
 });

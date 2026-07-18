@@ -19,6 +19,7 @@ type GeminiEmbeddingClient = {
         taskType: string;
         title?: string;
         outputDimensionality: number;
+        abortSignal: AbortSignal;
       };
     }): Promise<{ embeddings?: Array<{ values?: number[] }> }>;
   };
@@ -30,6 +31,7 @@ type GeminiEmbeddingProviderOptions = {
   dimension?: number;
   client?: GeminiEmbeddingClient;
   sleep?: (durationMs: number) => Promise<void>;
+  timeoutMs?: number;
 };
 
 const sleep = async (durationMs: number) => {
@@ -57,6 +59,7 @@ export class GeminiEmbeddingProvider implements EmbeddingProvider {
 
   private readonly client: GeminiEmbeddingClient;
   private readonly wait: (durationMs: number) => Promise<void>;
+  private readonly timeoutMs: number;
 
   constructor(options: GeminiEmbeddingProviderOptions = {}) {
     const configuredEnv =
@@ -79,6 +82,10 @@ export class GeminiEmbeddingProvider implements EmbeddingProvider {
         apiKey,
       });
     this.wait = options.sleep ?? sleep;
+    this.timeoutMs =
+      options.timeoutMs ??
+      configuredEnv?.GEMINI_REQUEST_TIMEOUT_MS ??
+      15_000;
   }
 
   async embedTexts(input: EmbedTextsInput): Promise<number[][]> {
@@ -100,6 +107,7 @@ export class GeminiEmbeddingProvider implements EmbeddingProvider {
             taskType,
             title: input.task === "document" ? input.title : undefined,
             outputDimensionality: this.dimension,
+            abortSignal: AbortSignal.timeout(this.timeoutMs),
           },
         });
         const embeddings = response.embeddings ?? [];

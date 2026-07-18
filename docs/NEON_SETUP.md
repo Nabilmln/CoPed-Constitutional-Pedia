@@ -86,4 +86,5 @@ embedding pipeline are available. See `docs/UUD_INGESTION.md` and
 `docs/HYBRID_RETRIEVAL.md`, and grounded answer generation in
 `docs/RAG_GENERATION.md`. The public Next.js endpoint and persistence contract
 are documented in `docs/CHAT_API.md`. Visitor statistics and feedback are
-documented in `docs/ANALYTICS_FEEDBACK_API.md`.
+documented in `docs/ANALYTICS_FEEDBACK_API.md`. The backend quality gate and
+remaining production risks are recorded in `docs/BACKEND_SECURITY_AUDIT.md`.

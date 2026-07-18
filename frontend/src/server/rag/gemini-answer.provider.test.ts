@@ -9,6 +9,7 @@ test("Gemini answer provider sends grounded low-temperature prompt", async () =>
   let capturedContents = "";
   let capturedSystemInstruction = "";
   let capturedTemperature = -1;
+  let capturedSignal: AbortSignal | undefined;
   const provider = new GeminiAnswerProvider({
     model: "test-model",
     client: {
@@ -17,6 +18,7 @@ test("Gemini answer provider sends grounded low-temperature prompt", async () =>
           capturedContents = input.contents;
           capturedSystemInstruction = input.config.systemInstruction;
           capturedTemperature = input.config.temperature;
+          capturedSignal = input.config.abortSignal;
           return { text: "Pasal 1 ayat (1) menyatakan Indonesia negara kesatuan." };
         },
       },
@@ -31,6 +33,7 @@ test("Gemini answer provider sends grounded low-temperature prompt", async () =>
   assert.match(capturedContents, /KONTEKS TERVERIFIKASI/);
   assert.match(capturedSystemInstruction, /hanya berdasarkan KONTEKS/i);
   assert.equal(capturedTemperature, 0.1);
+  assert.ok(capturedSignal instanceof AbortSignal);
   assert.match(answer, /Pasal 1/);
 });
 
