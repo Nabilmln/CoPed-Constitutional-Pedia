@@ -47,9 +47,21 @@ const ragEnvSchema = z.object({
 
 export type RagEnv = z.infer<typeof ragEnvSchema>;
 
+const generationEnvSchema = z.object({
+  GEMINI_API_KEY: z.string().trim().min(1, "GEMINI_API_KEY is required"),
+  GEMINI_GENERATION_MODEL: z
+    .string()
+    .trim()
+    .min(1)
+    .default("gemini-3.1-flash-lite"),
+});
+
+export type GenerationEnv = z.infer<typeof generationEnvSchema>;
+
 let cachedDatabaseEnv: DatabaseEnv | undefined;
 let cachedEmbeddingEnv: EmbeddingEnv | undefined;
 let cachedRagEnv: RagEnv | undefined;
+let cachedGenerationEnv: GenerationEnv | undefined;
 
 export const getDatabaseEnv = (): DatabaseEnv => {
   if (cachedDatabaseEnv) {
@@ -106,4 +118,23 @@ export const getRagEnv = (): RagEnv => {
 
   cachedRagEnv = result.data;
   return cachedRagEnv;
+};
+
+export const getGenerationEnv = (): GenerationEnv => {
+  if (cachedGenerationEnv) {
+    return cachedGenerationEnv;
+  }
+
+  const result = generationEnvSchema.safeParse(process.env);
+
+  if (!result.success) {
+    const details = result.error.issues
+      .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
+      .join("; ");
+
+    throw new Error(`Invalid generation environment: ${details}`);
+  }
+
+  cachedGenerationEnv = result.data;
+  return cachedGenerationEnv;
 };
