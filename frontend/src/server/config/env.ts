@@ -70,11 +70,29 @@ const chatEnvSchema = z.object({
 
 export type ChatEnv = z.infer<typeof chatEnvSchema>;
 
+const feedbackEnvSchema = z.object({
+  FEEDBACK_RATE_LIMIT_MAX: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(20)
+    .default(3),
+  FEEDBACK_RATE_LIMIT_WINDOW_SECONDS: z.coerce
+    .number()
+    .int()
+    .min(60)
+    .max(604_800)
+    .default(86_400),
+});
+
+export type FeedbackEnv = z.infer<typeof feedbackEnvSchema>;
+
 let cachedDatabaseEnv: DatabaseEnv | undefined;
 let cachedEmbeddingEnv: EmbeddingEnv | undefined;
 let cachedRagEnv: RagEnv | undefined;
 let cachedGenerationEnv: GenerationEnv | undefined;
 let cachedChatEnv: ChatEnv | undefined;
+let cachedFeedbackEnv: FeedbackEnv | undefined;
 
 export const getDatabaseEnv = (): DatabaseEnv => {
   if (cachedDatabaseEnv) {
@@ -169,4 +187,23 @@ export const getChatEnv = (): ChatEnv => {
 
   cachedChatEnv = result.data;
   return cachedChatEnv;
+};
+
+export const getFeedbackEnv = (): FeedbackEnv => {
+  if (cachedFeedbackEnv) {
+    return cachedFeedbackEnv;
+  }
+
+  const result = feedbackEnvSchema.safeParse(process.env);
+
+  if (!result.success) {
+    const details = result.error.issues
+      .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
+      .join("; ");
+
+    throw new Error(`Invalid feedback environment: ${details}`);
+  }
+
+  cachedFeedbackEnv = result.data;
+  return cachedFeedbackEnv;
 };

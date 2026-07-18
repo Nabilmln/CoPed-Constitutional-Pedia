@@ -85,4 +85,5 @@ embedding pipeline are available. See `docs/UUD_INGESTION.md` and
 `docs/GEMINI_EMBEDDING.md`. Hybrid retrieval is documented in
 `docs/HYBRID_RETRIEVAL.md`, and grounded answer generation in
 `docs/RAG_GENERATION.md`. The public Next.js endpoint and persistence contract
-are documented in `docs/CHAT_API.md`.
+are documented in `docs/CHAT_API.md`. Visitor statistics and feedback are
+documented in `docs/ANALYTICS_FEEDBACK_API.md`.

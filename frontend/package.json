@@ -14,6 +14,7 @@
     "test:retrieval": "tsx --test src/server/retrieval/*.test.ts",
     "test:rag": "tsx --test src/server/rag/*.test.ts",
     "test:chat": "tsx --test src/server/chat/*.test.ts",
+    "test:engagement": "tsx --test src/server/analytics/*.test.ts src/server/feedback/*.test.ts",
     "ingest:uud": "tsx scripts/ingest-uud.ts",
     "embed:uud": "tsx scripts/embed-uud.ts",
     "evaluate:retrieval": "tsx scripts/evaluate-retrieval.ts",

@@ -10,6 +10,8 @@
     "scripts/**/*.ts",
     "src/server/config/**/*.ts",
     "src/server/database/**/*.ts",
+    "src/server/analytics/**/*.ts",
+    "src/server/feedback/**/*.ts",
     "src/server/documents/**/*.ts",
     "src/server/embeddings/**/*.ts",
     "src/server/retrieval/**/*.ts",
