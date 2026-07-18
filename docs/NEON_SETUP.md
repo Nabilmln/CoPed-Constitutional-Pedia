@@ -84,5 +84,5 @@ The Next.js database foundation, Node.js UUD ingestion pipeline, and Gemini
 embedding pipeline are available. See `docs/UUD_INGESTION.md` and
 `docs/GEMINI_EMBEDDING.md`. Hybrid retrieval is documented in
 `docs/HYBRID_RETRIEVAL.md`, and grounded answer generation in
-`docs/RAG_GENERATION.md`. The public Next.js API is introduced in the next
-phase.
+`docs/RAG_GENERATION.md`. The public Next.js endpoint and persistence contract
+are documented in `docs/CHAT_API.md`.

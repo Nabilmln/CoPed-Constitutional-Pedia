@@ -5,6 +5,7 @@
   },
   "include": [
     "next-env.d.ts",
+    "src/app/api/**/*.ts",
     "drizzle.config.ts",
     "scripts/**/*.ts",
     "src/server/config/**/*.ts",

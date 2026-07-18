@@ -58,10 +58,23 @@ const generationEnvSchema = z.object({
 
 export type GenerationEnv = z.infer<typeof generationEnvSchema>;
 
+const chatEnvSchema = z.object({
+  CHAT_RATE_LIMIT_MAX: z.coerce.number().int().min(1).max(100).default(10),
+  CHAT_RATE_LIMIT_WINDOW_SECONDS: z.coerce
+    .number()
+    .int()
+    .min(10)
+    .max(3_600)
+    .default(60),
+});
+
+export type ChatEnv = z.infer<typeof chatEnvSchema>;
+
 let cachedDatabaseEnv: DatabaseEnv | undefined;
 let cachedEmbeddingEnv: EmbeddingEnv | undefined;
 let cachedRagEnv: RagEnv | undefined;
 let cachedGenerationEnv: GenerationEnv | undefined;
+let cachedChatEnv: ChatEnv | undefined;
 
 export const getDatabaseEnv = (): DatabaseEnv => {
   if (cachedDatabaseEnv) {
@@ -137,4 +150,23 @@ export const getGenerationEnv = (): GenerationEnv => {
 
   cachedGenerationEnv = result.data;
   return cachedGenerationEnv;
+};
+
+export const getChatEnv = (): ChatEnv => {
+  if (cachedChatEnv) {
+    return cachedChatEnv;
+  }
+
+  const result = chatEnvSchema.safeParse(process.env);
+
+  if (!result.success) {
+    const details = result.error.issues
+      .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
+      .join("; ");
+
+    throw new Error(`Invalid chat environment: ${details}`);
+  }
+
+  cachedChatEnv = result.data;
+  return cachedChatEnv;
 };
