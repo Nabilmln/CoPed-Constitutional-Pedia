@@ -10,13 +10,16 @@
     "typecheck": "tsc --noEmit",
     "typecheck:database": "tsc --noEmit --project tsconfig.database.json",
     "test:ingestion": "tsx --test src/server/documents/*.test.ts",
+    "test:embeddings": "tsx --test src/server/embeddings/*.test.ts",
     "ingest:uud": "tsx scripts/ingest-uud.ts",
+    "embed:uud": "tsx scripts/embed-uud.ts",
     "db:check": "node scripts/check-database.mjs",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@google/genai": "^2.12.0",
     "@heroicons/react": "^2.2.0",
     "@neondatabase/serverless": "^1.1.0",
     "@splinetool/react-spline": "^4.1.0",

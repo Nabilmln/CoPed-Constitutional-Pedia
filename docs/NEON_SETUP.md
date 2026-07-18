@@ -80,6 +80,7 @@ as reviewed migration files.
 
 ## Current boundary
 
-The Next.js database foundation and Node.js UUD ingestion pipeline are
-available. The embedding provider and RAG API are introduced in subsequent
-phases.
+The Next.js database foundation, Node.js UUD ingestion pipeline, and Gemini
+embedding pipeline are available. See `docs/UUD_INGESTION.md` and
+`docs/GEMINI_EMBEDDING.md`. Retrieval and the RAG API are introduced in
+subsequent phases.
