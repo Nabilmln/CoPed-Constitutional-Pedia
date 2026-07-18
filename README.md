@@ -43,8 +43,9 @@ npm run dev
 Buka `http://localhost:3000`. Jangan commit `.env.local`; semua API key hanya
 dibaca oleh server.
 
-Jika cache development tidak sinkron setelah perpindahan atau penghapusan
-route besar, gunakan `npm run dev:fresh` dari folder `frontend`.
+Pada workspace OneDrive, `npm run dev` otomatis membersihkan cache `.next`
+sebelum startup untuk menghindari error reparse-point `EINVAL`. Clone di luar
+OneDrive dapat memakai `npm run dev:cached` untuk startup yang lebih cepat.
 
 ## Quality gate
 
