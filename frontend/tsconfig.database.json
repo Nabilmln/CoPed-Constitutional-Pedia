@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "incremental": false
+  },
+  "include": [
+    "next-env.d.ts",
+    "drizzle.config.ts",
+    "src/server/config/**/*.ts",
+    "src/server/database/**/*.ts"
+  ],
+  "exclude": ["node_modules"]
+}
