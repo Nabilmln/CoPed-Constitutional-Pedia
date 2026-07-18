@@ -478,9 +478,6 @@ export default function CopedExperience() {
           <a href="#chatbot">Chatbot</a>
           <a href="#testimoni">Testimoni</a>
         </nav>
-        <a className="header-cta" href="#chatbot">
-          Mulai bertanya <ArrowIcon />
-        </a>
       </header>
 
       <section className="hero-section" id="beranda">
@@ -820,7 +817,13 @@ export default function CopedExperience() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/coped-logo-white-full.png" alt="CoPed" />
         </a>
-        <p>Belajar konstitusi, memahami Indonesia.</p>
+        <div className="footer-definition">
+          <strong>Tentang CoPed</strong>
+          <p>
+            Ruang belajar berbasis RAG untuk memahami UUD 1945 melalui jawaban
+            yang selalu merujuk pada dokumen konstitusi.
+          </p>
+        </div>
         <span>© 2026 CoPed · Portfolio project</span>
       </footer>
     </main>

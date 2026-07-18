@@ -9,6 +9,8 @@ Desktop uses a split layout:
 - the left side introduces UUD 1945 and the grounded nature of CoPed;
 - the right side continuously rotates reviewed user testimonials from bottom
   to top, with wheel-like scale and fade transitions.
+- the primary navigation links directly to Beranda, Chatbot, and Testimoni;
+  there is no duplicate “Mulai bertanya” action.
 
 ## Section 2: chatbot
 
@@ -64,7 +66,9 @@ appearing publicly.
 - Form controls have labels and keyboard behavior.
 - Chat and feedback status changes use live regions.
 - Reduced-motion preferences disable nonessential animation.
-- Semantic landmarks and anchor navigation cover both page sections.
+- Semantic landmarks and anchor navigation cover all three page sections.
+- The footer includes a concise definition of CoPed and its grounded RAG
+  purpose.
 
 ## Verification
 

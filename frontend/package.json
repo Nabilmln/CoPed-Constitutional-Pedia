@@ -23,6 +23,7 @@
     "embed:uud": "tsx scripts/embed-uud.ts",
     "evaluate:retrieval": "tsx scripts/evaluate-retrieval.ts",
     "evaluate:rag": "tsx scripts/evaluate-rag.ts",
+    "seed:testimonials": "node scripts/seed-testimonials.mjs",
     "db:check": "node scripts/check-database.mjs",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",

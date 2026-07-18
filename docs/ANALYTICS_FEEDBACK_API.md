@@ -142,6 +142,18 @@ The hero fetches reviewed testimonials, shuffles them in the browser, and
 animates them vertically. When none are reviewed, the UI shows neutral
 invitation cards instead of fabricated user quotes.
 
+For a portfolio/demo database, the repository includes an idempotent seed:
+
+```bash
+cd frontend
+npm run seed:testimonials
+```
+
+It keeps Alfi's submitted message, prefers existing real reviewed
+testimonials, and fills only a shortage up to ten with clearly labelled
+`(Demo)` names. Demo rows are archived automatically once ten non-demo
+reviewed testimonials exist.
+
 ## Privacy boundary
 
 - No IP address or user agent is stored.
