@@ -11,18 +11,7 @@ CoPed (Constitutional Pedia) membantu pengguna memahami UUD 1945 melalui tanya j
 
 ## Arsitektur
 
-```mermaid
-flowchart LR
-    User[Pengguna] --> UI[Web Next.js] --> API[API routes]
-    API --> RAG[Domain check + hybrid retrieval + jawaban]
-    API --> Data[Chat, kunjungan, testimoni]
-    RAG --> Gemini[Gemini API]
-    RAG --> DB[(Neon PostgreSQL + pgvector)]
-    Data --> DB
-    PDF[PDF UUD 1945] --> CLI[CLI ingestion + embedding]
-    CLI --> Gemini
-    CLI --> DB
-```
+![Arsitektur sistem CoPed](docs/coped-system.png)
 
 [Lihat diagram interaktif](.archify/architecture-coped-20261024-153239/coped-architecture.html).
 
