@@ -55,6 +55,7 @@ Thumbs.db
 Desktop.ini
 
 # Generated evaluation artifacts
+.archify/
 test_results/
 benchmark_results/
 TASK_*_REPORT.md

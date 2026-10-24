@@ -14,8 +14,6 @@ CoPed (Constitutional Pedia) is a learning assistant for Indonesia's 1945 Consti
 
 The preparation CLI parses the UUD 1945 PDF, creates chunks and Gemini embeddings, then stores them in Neon. For each chat question, the Next.js API checks the topic, retrieves relevant chunks through vector and article-reference search, and asks Gemini to generate an answer from that context.
 
-[Explore the interactive architecture diagram](.archify/architecture-coped-20261024-153239/coped-architecture.html).
-
 ## Tech stack
 
 - **App:** Next.js 16, React 19, TypeScript, Tailwind CSS 4
