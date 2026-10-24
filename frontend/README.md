@@ -1,14 +1,5 @@
 # CoPed Web
 
-Aplikasi Next.js untuk CoPed. Ringkasan proyek ada di [README utama](../README.md).
+This directory contains the CoPed Next.js app. See the [project README](../README.md) for the overview and local setup, and [`docs`](../docs) for backend guides.
 
-```bash
-npm install
-copy .env.example .env.local
-npm run db:migrate
-npm run dev
-```
-
-Untuk menyiapkan data UUD 1945, ikuti panduan [ingestion](../docs/UUD_INGESTION.md)
-dan [embedding](../docs/GEMINI_EMBEDDING.md). Jika cache Next.js bermasalah di
-OneDrive, gunakan `npm run dev:fresh`.
+If Next.js cache errors occur in a OneDrive workspace, use `npm run dev:fresh`.
