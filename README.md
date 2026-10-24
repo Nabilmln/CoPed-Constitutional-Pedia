@@ -1,84 +1,35 @@
 # CoPed
 
-CoPed adalah aplikasi edukasi UUD 1945 berbasis Retrieval-Augmented
-Generation (RAG). Seluruh aplikasi berjalan sebagai satu project Next.js:
-antarmuka web, API, ingestion dokumen, retrieval, dan grounded answer
-generation.
+## Tentang
 
-## Stack
+CoPed (Constitutional Pedia) membantu pengguna memahami UUD 1945 melalui tanya jawab berbasis dokumen konstitusi.
 
-- Next.js 15 dan TypeScript
-- Neon PostgreSQL dengan `pgvector`
-- Drizzle ORM
-- Gemini Embedding API (`gemini-embedding-001`)
-- Gemini generation API
-- Custom RAG pipeline tanpa Python, LangChain, Chroma, atau backend terpisah
+## Fitur
 
-## Struktur
+- Menjawab pertanyaan tentang UUD 1945 dengan rujukan pasal dan ayat yang relevan.
+- Menampilkan statistik penggunaan serta menerima dan menampilkan testimoni yang telah ditinjau.
 
-```text
-CoPed/
-├── docs/                  dokumentasi backend dan API
-└── frontend/
-    ├── data/              sumber UUD 1945 untuk ingestion
-    ├── drizzle/           migration database
-    ├── scripts/           ingestion dan evaluasi
-    └── src/
-        ├── app/api/       route handlers
-        └── server/        domain services dan repositories
+## Arsitektur
+
+```mermaid
+flowchart LR
+    User[Pengguna] --> UI[Web Next.js] --> API[API routes]
+    API --> RAG[Domain check + hybrid retrieval + jawaban]
+    API --> Data[Chat, kunjungan, testimoni]
+    RAG --> Gemini[Gemini API]
+    RAG --> DB[(Neon PostgreSQL + pgvector)]
+    Data --> DB
+    PDF[PDF UUD 1945] --> CLI[CLI ingestion + embedding]
+    CLI --> Gemini
+    CLI --> DB
 ```
 
-## Menjalankan lokal
+[Lihat diagram interaktif](.archify/architecture-coped-20261024-153239/coped-architecture.html).
 
-```bash
-cd frontend
-npm install
-copy .env.example .env.local
-npm run db:migrate
-npm run ingest:uud
-npm run embed:uud
-npm run dev
-```
+## Tech stack
 
-Buka `http://localhost:3000`. Jangan commit `.env.local`; semua API key hanya
-dibaca oleh server.
+Next.js 16, React 19, TypeScript, Tailwind CSS 4, Neon PostgreSQL (`pgvector`), Drizzle ORM, dan Gemini API.
 
-Pada workspace OneDrive, `npm run dev` otomatis membersihkan cache `.next`
-sebelum startup untuk menghindari error reparse-point `EINVAL`. Clone di luar
-OneDrive dapat memakai `npm run dev:cached` untuk startup yang lebih cepat.
+## Copyright
 
-## Quality gate
-
-```bash
-cd frontend
-npm run test:backend
-npm run typecheck
-npm run build
-```
-
-## API dan dokumentasi
-
-- `POST /api/chat`
-- `POST /api/analytics/visit`
-- `GET /api/stats`
-- `POST /api/feedback`
-- `GET /api/testimonials`
-
-Dokumentasi lengkap:
-
-- [Neon setup](docs/NEON_SETUP.md)
-- [UUD ingestion](docs/UUD_INGESTION.md)
-- [Embedding](docs/GEMINI_EMBEDDING.md)
-- [Retrieval](docs/HYBRID_RETRIEVAL.md)
-- [RAG generation](docs/RAG_GENERATION.md)
-- [Chat API](docs/CHAT_API.md)
-- [Analytics dan feedback](docs/ANALYTICS_FEEDBACK_API.md)
-- [One-page UI](docs/ONE_PAGE_UI.md)
-- [Security audit](docs/BACKEND_SECURITY_AUDIT.md)
-
-## Deployment
-
-Deploy folder `frontend` sebagai root project di Vercel dan tambahkan seluruh
-environment variable server-side melalui dashboard Vercel. Database dikelola
-oleh Neon. Ingestion dan embedding dokumen dijalankan sebagai maintenance
-command, bukan pada setiap request.
+© 2026 CoPed. All rights reserved.
